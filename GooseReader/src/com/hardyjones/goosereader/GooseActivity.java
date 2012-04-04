@@ -26,6 +26,7 @@ import java.util.Random;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -41,6 +42,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 /**
@@ -54,6 +56,7 @@ public class GooseActivity extends Activity {
 	private static final int FIRST_COMIC_NUMBER = 1;
 	private static final Random sRandomNumber = new Random();
 	private static boolean sNavigation = true;
+	private static boolean sScraped = false;
 	private static int sCurrentComicNumber; // This is the latest comic.
 	private static int sPresentComicNumber; // This is the comic that is presently in view.
 	private static String sImageUrl;
@@ -63,6 +66,9 @@ public class GooseActivity extends Activity {
 	private static TextView sAltTextView;
     private static WebView sComicView;
 	private static Document sRawHtml;
+	
+	private static String sComicTitle;
+	private static String sAltText;
 
 	/** Called when the activity is first created. */
     @Override
@@ -147,36 +153,27 @@ public class GooseActivity extends Activity {
 	
 	/** Parses the home page for the value of the current comic. */
     private void findCurrentComic() {
-    	retrieveImage();
-
-    	Element currentComicTag = sRawHtml.select(getString(R.string.find_comic_tag)).first();
-    	String currentComicString = currentComicTag.attr(getString(R.string.hyperlink));
-    	int lastForwardSlash = currentComicString.lastIndexOf(getString(R.string.forward_slash)) + 1;
-    	
-    	/* This is actually the second most recent comic, so increment. */
-    	sCurrentComicNumber = Integer.parseInt(currentComicString.substring(lastForwardSlash));
-    	sPresentComicNumber = ++sCurrentComicNumber;
-
+    	// Scraping time.
+    	scrapeSite();
+    	// Set scraped to true, so we don't have to do this again so soon.
+    	sScraped = true;
+    	// Set the current comic number based on what was just parsed.
+    	sCurrentComicNumber = sPresentComicNumber;
+    	// Display this latest comic.
     	loadComic();
-    }
-
-    /** Parses the present comic URL for the image URL. */
-    private void retrieveImage() {
-    	try {
-			sPresentUrl = getString(R.string.base_url) + String.valueOf(sPresentComicNumber);
-    		sRawHtml = Jsoup.connect(sPresentUrl).get();
-    		Element imageTag = sRawHtml.select(getString(R.string.find_image_tag)).first();
-    		sImageUrl = imageTag.attr(getString(R.string.image_source));
-    	} catch (IOException e){
-    		e.printStackTrace();
-    	}
+    	// Reset scraped to false, so things will work like they should.
+    	sScraped = false;
     }
 
     /** Loads the present comic URL into the webview. */
     private void loadComic() {
+    	// Throw up a progress dialog box.
     	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
+    	// Let the user cancel it if need be.
     	loadingComic.setCancelable(true);
-    	retrieveImage();
+    	// Scrapy scrapy.
+    	scrapeSite();
+    	
     	sComicView.loadUrl(sImageUrl);
     	sComicView.setWebChromeClient(new WebChromeClient() {
     		@Override
@@ -250,15 +247,8 @@ public class GooseActivity extends Activity {
     protected void onPrepareDialog (int id, Dialog dialog) {
     	switch (id) {
     	case SHOW_INFO_DIALOG:
-    		
-    		/* Parse the comic title and alt text if available. */
-    		Element titleTag = sRawHtml.select(getString(R.string.find_title_tag)).first();
-    		String title = titleTag.text();
-    		Element imageTag = sRawHtml.select(getString(R.string.find_image_tag)).first();
-    		String altText = imageTag.attr(getString(R.string.image_title));
-
-    		sInfoDialog.setTitle(title);
-			sAltTextView.setText(altText);
+    		sInfoDialog.setTitle(sComicTitle);
+			sAltTextView.setText(sAltText);
 		default:
 			break;
     	}
@@ -274,5 +264,62 @@ public class GooseActivity extends Activity {
     		// The string should already be parsed.
     		sImageUrl = rawString;
     	}
+    }
+    
+    private void scrapeSite() {
+    	// If we just recently did this, return.
+    	if (sScraped) {
+    		return;
+    	}
+    	// Otherwise, it's time for some fun.
+    	try {
+    		// Set the present Url.
+    		sPresentUrl = getString(R.string.base_url) + sPresentComicNumber;
+    		// Connect to the site and get the html.
+			sRawHtml = Jsoup.connect(sPresentUrl).get();
+			// Try to get the div with a post class.
+			Elements divTags = sRawHtml.select(".post");
+			
+			if (divTags.size() > 0) {
+				// Assuming we got any divs, take the first one.
+				Element divTag = divTags.first();
+				// Get the current comic number.
+				String presentNumber = divTag.id().substring(5);
+				// Convert it to an integer, so we can play with it.
+				sPresentComicNumber = Integer.parseInt(presentNumber);
+				
+				// Grab the comic header and the img stuff.
+				Elements anchorTags = divTag.select("a[rel]");
+				Elements imageTags = divTag.select("img[src]");
+
+				// See if we got any anchor tags.
+				if (anchorTags.size() > 0) {
+					// Take the text of the tag as the comic title.
+					sComicTitle = anchorTags.first().ownText();
+				} else {
+					// There was no title for the comic. Use a default value.
+					sComicTitle = "Goose Reader";
+				}
+				
+				// See if we got any image tags.
+				if (imageTags.size() > 0) {
+					// Nab the source of the image and the title.
+					String rawSource = imageTags.first().attr("src");
+					sAltText = imageTags.first().attr("title");
+					// Send the image source to parsing.
+					parseImageSource(rawSource);
+				} else {
+					// There was no image tag.
+					// TODO: We better do something here.
+				}
+			} else {
+				// Couldn't find a div tag.
+				// TODO: Probably the same thing we do when no image is found.
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 }
