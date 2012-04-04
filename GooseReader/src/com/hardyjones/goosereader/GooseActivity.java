@@ -69,39 +69,42 @@ public class GooseActivity extends Activity {
     private static WebView sComicView;
 	private static Document sRawHtml;
 	
-
-	/** Called when the activity is first created. */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        
-        /* Set up the webview */
-        sComicView = (WebView) findViewById(R.id.comicView);
-        sComicView.getSettings().setBuiltInZoomControls(true);
-        sComicView.getSettings().setLoadWithOverviewMode(true);
-        sComicView.getSettings().setUseWideViewPort(true);
-        sComicView.setOnLongClickListener(new OnLongClickListener() {
-			public boolean onLongClick(View v) {
-				showDialog(SHOW_INFO_DIALOG);
-
-				return true;
-			}
-		});
-
-        /* Set up the navigation control layout if it is to be hidden. */
-        sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
+	/** Parses the home page for the value of the current comic. */
+    private void findCurrentComic() {
+    	// Scraping time.
+    	scrapeSite();
+    	// Set scraped to true, so we don't have to do this again so soon.
+    	sScraped = true;
+    	// Set the current comic number based on what was just parsed.
+    	sCurrentComicNumber = sPresentComicNumber;
+    	// Display this latest comic.
+    	loadComic();
+    	// Reset scraped to false, so things will work like they should.
+    	sScraped = false;
     }
-    
-    /** Refreshes to the newest comic. */
-    @Override
-    protected void onResume() {
-    	super.onResume();
+
+    /** Loads the present comic URL into the webview. */
+    private void loadComic() {
+    	// Throw up a progress dialog box.
+    	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
+    	// Let the user cancel it if need be.
+    	loadingComic.setCancelable(true);
+    	// Scrapy scrapy.
+    	scrapeSite();
     	
-    	sPresentComicNumber = 0;
-    	findCurrentComic();
+    	sComicView.loadUrl(sImageUrl);
+    	sComicView.setWebChromeClient(new WebChromeClient() {
+    		@Override
+    		public void onProgressChanged(WebView view, int progress) {
+    			if (progress == 100) {
+    				loadingComic.dismiss();
+    			}
+    		}
+    	});
+    	/* XXX There has to be a better way to keep the cache from filling. */
+    	sComicView.clearCache(true);
     }
-	
+
     /**
      * Handles each button in the navigation layout.
      * @param button The button that performed the event.
@@ -151,42 +154,44 @@ public class GooseActivity extends Activity {
 		loadComic();
 	}
 	
-	/** Parses the home page for the value of the current comic. */
-    private void findCurrentComic() {
-    	// Scraping time.
-    	scrapeSite();
-    	// Set scraped to true, so we don't have to do this again so soon.
-    	sScraped = true;
-    	// Set the current comic number based on what was just parsed.
-    	sCurrentComicNumber = sPresentComicNumber;
-    	// Display this latest comic.
-    	loadComic();
-    	// Reset scraped to false, so things will work like they should.
-    	sScraped = false;
-    }
+	/** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+    	super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        
+        /* Set up the webview */
+        sComicView = (WebView) findViewById(R.id.comicView);
+        sComicView.getSettings().setBuiltInZoomControls(true);
+        sComicView.getSettings().setLoadWithOverviewMode(true);
+        sComicView.getSettings().setUseWideViewPort(true);
+        sComicView.setOnLongClickListener(new OnLongClickListener() {
+			public boolean onLongClick(View v) {
+				showDialog(SHOW_INFO_DIALOG);
 
-    /** Loads the present comic URL into the webview. */
-    private void loadComic() {
-    	// Throw up a progress dialog box.
-    	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
-    	// Let the user cancel it if need be.
-    	loadingComic.setCancelable(true);
-    	// Scrapy scrapy.
-    	scrapeSite();
-    	
-    	sComicView.loadUrl(sImageUrl);
-    	sComicView.setWebChromeClient(new WebChromeClient() {
-    		@Override
-    		public void onProgressChanged(WebView view, int progress) {
-    			if (progress == 100) {
-    				loadingComic.dismiss();
-    			}
-    		}
-    	});
-    	/* XXX There has to be a better way to keep the cache from filling. */
-    	sComicView.clearCache(true);
-    }
+				return true;
+			}
+		});
 
+        /* Set up the navigation control layout if it is to be hidden. */
+        sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
+    }
+    
+    @Override
+    protected Dialog onCreateDialog(int id) {
+    	switch (id) {
+    	case SHOW_INFO_DIALOG:
+    		sInfoDialog = new Dialog(this);
+    		sInfoDialog.setContentView(R.layout.alt_text);
+    		sAltTextView = (TextView) sInfoDialog.findViewById(R.id.altTextView);
+    		
+    		return sInfoDialog;
+    	default:
+    		break;
+    	}
+    	return super.onCreateDialog(id);
+    }
+    
     /** Creates a menu when the menu button is pressed on the device. */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -214,30 +219,6 @@ public class GooseActivity extends Activity {
     	return true;
     }
     
-    /** Toggles the comic navigation on the screen. */
-    private void toggleNavigation() {
-    	if (sNavigation == true) {
-    		sNavigationLayout.setVisibility(View.VISIBLE);
-    	} else {
-    		sNavigationLayout.setVisibility(View.GONE);
-    	}
-    }
-
-    @Override
-    protected Dialog onCreateDialog(int id) {
-    	switch (id) {
-    	case SHOW_INFO_DIALOG:
-    		sInfoDialog = new Dialog(this);
-    		sInfoDialog.setContentView(R.layout.alt_text);
-    		sAltTextView = (TextView) sInfoDialog.findViewById(R.id.altTextView);
-    		
-    		return sInfoDialog;
-    	default:
-    		break;
-    	}
-    	return super.onCreateDialog(id);
-    }
-    
     /** 
      * Shows additional information including: comic title and alt text.
      * @param id ID of the dialog to prepare.
@@ -254,6 +235,15 @@ public class GooseActivity extends Activity {
     	}
     }
     
+    /** Refreshes to the newest comic. */
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	
+    	sPresentComicNumber = 0;
+    	findCurrentComic();
+    }
+	
     private void parseImageSource(String rawString) {
     	// Check if the image source has the base url on it.
     	if (!rawString.startsWith(getString(R.string.base_url))) {
@@ -321,5 +311,14 @@ public class GooseActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+    }
+
+    /** Toggles the comic navigation on the screen. */
+    private void toggleNavigation() {
+    	if (sNavigation == true) {
+    		sNavigationLayout.setVisibility(View.VISIBLE);
+    	} else {
+    		sNavigationLayout.setVisibility(View.GONE);
+    	}
     }
 }
