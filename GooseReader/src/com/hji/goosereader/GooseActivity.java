@@ -1,6 +1,6 @@
 /* GooseActivity.java
  * 
- * Version 1.1.1
+ * Version 1.1.2
  * 
  * Copyright 2011-2012 Hardy Jones III
  *
@@ -59,8 +59,11 @@ public class GooseActivity extends Activity {
 	private static final Random sRandomNumber = new Random();
 	private static boolean sNavigation = true;
 	private static boolean sScraped = false;
-	private static int sCurrentComicNumber; // This is the latest comic.
-	private static int sPresentComicNumber; // This is the comic that is presently in view.
+	// This is the latest comic.
+	private static int sCurrentComicNumber;
+	// This is the comic that is presently in view.
+	// Default to zero to make things easy.
+	private static int sPresentComicNumber = 0;
 	private static String sAltText;
 	private static String sComicTitle;
 	private static String sImageUrl;
@@ -71,9 +74,11 @@ public class GooseActivity extends Activity {
     private static WebView sComicView;
 	private static Document sRawHtml;
 	
-	/** Parses the home page for the value of the current comic. */
+	/**
+	 * Parses the home page for the value of the current comic.
+	 */
     private void findCurrentComic() {
-    	// Scraping time.
+    	// It's scrapin' time!
     	scrapeSite();
     	// Set scraped to true, so we don't have to do this again so soon.
     	sScraped = true;
@@ -85,7 +90,9 @@ public class GooseActivity extends Activity {
     	sScraped = false;
     }
 
-    /** Loads the present comic URL into the webview. */
+    /**
+     * Loads the present comic URL into the webview.
+     */
     private void loadComic() {
     	// Throw up a progress dialog box.
     	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
@@ -103,7 +110,10 @@ public class GooseActivity extends Activity {
     			}
     		}
     	});
-    	/* XXX There has to be a better way to keep the cache from filling. */
+    	/* 
+    	 * XXX There has to be a better way to keep the cache from filling.
+    	 * Especially since this doesn't work.
+    	 */
     	sComicView.clearCache(true);
     }
 
@@ -156,7 +166,9 @@ public class GooseActivity extends Activity {
 		loadComic();
 	}
 	
-	/** Called when the activity is first created. */
+	/**
+	 * Called when the activity is first created.
+	 */
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -177,8 +189,15 @@ public class GooseActivity extends Activity {
 
         /* Set up the navigation control layout if it is to be hidden. */
         sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
+    	
+        // Get the latest comic number.
+    	findCurrentComic();
+
     }
     
+    /**
+     * Creates a dialog for the alt text.
+     */
     @Override
     protected Dialog onCreateDialog(int id) {
     	switch (id) {
@@ -194,7 +213,9 @@ public class GooseActivity extends Activity {
     	return super.onCreateDialog(id);
     }
     
-    /** Creates a menu when the menu button is pressed on the device. */
+    /**
+     * Creates a menu when the menu button is pressed on the device.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater mainMenu = getMenuInflater();
@@ -249,15 +270,6 @@ public class GooseActivity extends Activity {
 			break;
     	}
     }
-    
-    /** Refreshes to the newest comic. */
-    @Override
-    protected void onResume() {
-    	super.onResume();
-    	
-    	sPresentComicNumber = 0;
-    	findCurrentComic();
-    }
 	
     /**
      * Ensures the string for the image source is a valid url.
@@ -290,9 +302,9 @@ public class GooseActivity extends Activity {
     	}
     	// Otherwise, it's time for some fun.
     	try {
-    		// Set the present Url.
+    		// Set the present URL, in case it's never been done.
     		sPresentUrl = getString(R.string.base_url) + sPresentComicNumber;
-    		// Connect to the site and get the html.
+    		// Connect to the site and get the HTML.
 			sRawHtml = Jsoup.connect(sPresentUrl).get();
 			// Try to get the div with a post class.
 			Elements divTags = sRawHtml.select(getString(R.string.find_div_tag));
@@ -304,6 +316,9 @@ public class GooseActivity extends Activity {
 				String presentNumber = divTag.id().substring(5);
 				// Convert it to an integer, so we can play with it.
 				sPresentComicNumber = Integer.parseInt(presentNumber);
+				// Now that we have the actual comic number,
+				// reset the present URL to the actual URL.
+				sPresentUrl = getString(R.string.base_url) + sPresentComicNumber; 
 				
 				// Grab the comic header and the img stuff.
 				Elements anchorTags = divTag.select(getString(R.string.find_anchor_tag));
@@ -356,7 +371,9 @@ public class GooseActivity extends Activity {
     	startActivity(Intent.createChooser(shareIntent, "Share Comic"));
     }
     
-    /** Toggles the comic navigation on the screen. */
+    /** 
+     * Toggles the comic navigation on the screen.
+     */
     private void toggleNavigation() {
     	if (sNavigation == true) {
     		sNavigationLayout.setVisibility(View.VISIBLE);
