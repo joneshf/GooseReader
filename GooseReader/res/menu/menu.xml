@@ -10,5 +10,9 @@
 			android:id="@+id/info"
 			android:title="Info...">
 		</item>
+		<item
+		    android:id="@+id/refresh"
+		    android:title="Refresh">
+		</item>
 	</group>
 </menu>

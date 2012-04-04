@@ -18,7 +18,7 @@
  */
 
 
-package com.hardyjones.goosereader;
+package com.hji.goosereader;
 
 import java.io.IOException;
 import java.util.Random;
@@ -42,6 +42,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 /**
@@ -211,6 +212,9 @@ public class GooseActivity extends Activity {
     	case R.id.info:
     		showDialog(SHOW_INFO_DIALOG);
     		break;
+    	case R.id.refresh:
+    		loadComic();
+    		break;
     	default:
     		break;
     	}
@@ -243,6 +247,13 @@ public class GooseActivity extends Activity {
     	findCurrentComic();
     }
 	
+    /**
+     * Ensures the string for the image source is a valid url.
+     * 
+     * E.g.: parseImageSource("/comic37.PNG") -> "http://base_url/comic37.PNG"
+     * 
+     * @param rawString  The datum to parse into a proper url. 
+     */
     private void parseImageSource(String rawString) {
     	// Check if the image source has the base url on it.
     	if (!rawString.startsWith(getString(R.string.base_url))) {
@@ -255,6 +266,11 @@ public class GooseActivity extends Activity {
     	}
     }
     
+    /**
+     * Does a whole mess of stuff.
+     * 
+     * Gets the correct comic number, image source, comic title, and alt-text.
+     */
     private void scrapeSite() {
     	// If we just recently did this, return.
     	if (sScraped) {
@@ -299,11 +315,11 @@ public class GooseActivity extends Activity {
 					parseImageSource(rawSource);
 				} else {
 					// There was no image tag.
-					// TODO: We better do something here.
+					Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
 				}
 			} else {
 				// Couldn't find a div tag.
-				// TODO: Probably the same thing we do when no image is found.
+				Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
 			}
 			
 		} catch (IOException e) {
