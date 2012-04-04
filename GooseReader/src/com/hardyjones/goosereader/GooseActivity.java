@@ -263,4 +263,16 @@ public class GooseActivity extends Activity {
 			break;
     	}
     }
+    
+    private void parseImageSource(String rawString) {
+    	// Check if the image source has the base url on it.
+    	if (!rawString.startsWith(getString(R.string.base_url))) {
+    		// If it doesn't, prepend the string with the base_url,
+    		// Remembering to remove the slash from the raw string.
+    		sImageUrl = getString(R.string.base_url) + rawString.substring(1);
+    	} else {
+    		// The string should already be parsed.
+    		sImageUrl = rawString;
+    	}
+    }
 }
