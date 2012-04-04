@@ -44,6 +44,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hardyjones.goosereader.R;
 
 /**
  * A simple comic reader for the website http://abstrusegoose.com/
