@@ -362,13 +362,13 @@ public class GooseActivity extends Activity {
     	// Create the intent.
     	Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
     	// Let's use just plain text.
-    	shareIntent.setType("text/plain");
+    	shareIntent.setType(getString(R.string.plain_text));
     	// Create the content.
-    	String comicLink = "Check out this comic:\n" + sPresentUrl;
+    	String comicLink = getString(R.string.share_message) + sPresentUrl;
     	// Pass it to the intent.
     	shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, comicLink);
     	// Call the activity.
-    	startActivity(Intent.createChooser(shareIntent, "Share Comic"));
+    	startActivity(Intent.createChooser(shareIntent, getString(R.string.share_title)));
     }
     
     /** 

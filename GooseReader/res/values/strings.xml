@@ -12,6 +12,9 @@
     <string name="loading_comic">Loading comic...</string>
     <string name="loading_error">There was an error loading this comic.\nYou can refresh from the menu to retry.</string>
     <string name="next_comic">Next Comic</string>
+    <string name="plain_text">text/plain</string>
     <string name="previous_comic">Previous Comic</string>
     <string name="random_comic">Random Comic</string>
+    <string name="share_message">Check out this comic:\n</string>
+    <string name="share_title">Share Comic</string>
 </resources>
