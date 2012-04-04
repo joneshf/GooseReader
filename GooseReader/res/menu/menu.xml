@@ -14,5 +14,6 @@
 		    android:id="@+id/refresh"
 		    android:title="Refresh">
 		</item>
-	</group>
+	<item android:id="@+id/share" android:titleCondensed="Share" android:title="Share Comic"></item></group>
+	
 </menu>

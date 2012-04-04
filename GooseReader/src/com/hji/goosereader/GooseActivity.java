@@ -31,6 +31,7 @@ import org.jsoup.select.Elements;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
@@ -202,19 +203,29 @@ public class GooseActivity extends Activity {
     	return true;
     }
 
-    /** Chooses which menu selection was pressed. */
+    /** 
+     * Chooses which options menu selection was pressed.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     	case R.id.toggleNavigation:
+    		// Flip the boolean.
     		sNavigation = !sNavigation;
+    		// Display/hide the nav.
     		toggleNavigation();
     		break;
     	case R.id.info:
+    		// Bring up the alt-text.
     		showDialog(SHOW_INFO_DIALOG);
     		break;
     	case R.id.refresh:
+    		// Load the same comic again.
     		loadComic();
+    		break;
+    	case R.id.share:
+    		// Start the share intent.
+    		shareComic();
     		break;
     	default:
     		break;
@@ -329,6 +340,22 @@ public class GooseActivity extends Activity {
 		}
     }
 
+    /**
+     * Creates a share intent and calls it for the user to share a link to the comic.
+     */
+    private void shareComic() {
+    	// Create the intent.
+    	Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
+    	// Let's use just plain text.
+    	shareIntent.setType("text/plain");
+    	// Create the content.
+    	String comicLink = "Check out this comic:\n" + sPresentUrl;
+    	// Pass it to the intent.
+    	shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, comicLink);
+    	// Call the activity.
+    	startActivity(Intent.createChooser(shareIntent, "Share Comic"));
+    }
+    
     /** Toggles the comic navigation on the screen. */
     private void toggleNavigation() {
     	if (sNavigation == true) {
