@@ -5,8 +5,13 @@
     <string name="find_anchor_tag">a[rel]</string>
     <string name="find_div_tag">.post</string>
     <string name="find_image_tag">img[src]</string>
+    <string name="first_comic">First Comic</string>
     <string name="image_source">src</string>
     <string name="image_title">title</string>
+    <string name="latest_comic">Latest Comic</string>
     <string name="loading_comic">Loading comic...</string>
     <string name="loading_error">There was an error loading this comic.\nYou can refresh from the menu to retry.</string>
+    <string name="next_comic">Next Comic</string>
+    <string name="previous_comic">Previous Comic</string>
+    <string name="random_comic">Random Comic</string>
 </resources>
