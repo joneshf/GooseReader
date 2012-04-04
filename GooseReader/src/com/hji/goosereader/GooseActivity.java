@@ -1,6 +1,6 @@
 /* GooseActivity.java
  * 
- * Version 1.1.0
+ * Version 1.1.1
  * 
  * Copyright 2011-2012 Hardy Jones III
  *
