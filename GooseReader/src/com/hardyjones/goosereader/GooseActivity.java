@@ -59,6 +59,8 @@ public class GooseActivity extends Activity {
 	private static boolean sScraped = false;
 	private static int sCurrentComicNumber; // This is the latest comic.
 	private static int sPresentComicNumber; // This is the comic that is presently in view.
+	private static String sAltText;
+	private static String sComicTitle;
 	private static String sImageUrl;
 	private static String sPresentUrl;
 	private static Dialog sInfoDialog;
@@ -67,8 +69,6 @@ public class GooseActivity extends Activity {
     private static WebView sComicView;
 	private static Document sRawHtml;
 	
-	private static String sComicTitle;
-	private static String sAltText;
 
 	/** Called when the activity is first created. */
     @Override
@@ -278,7 +278,7 @@ public class GooseActivity extends Activity {
     		// Connect to the site and get the html.
 			sRawHtml = Jsoup.connect(sPresentUrl).get();
 			// Try to get the div with a post class.
-			Elements divTags = sRawHtml.select(".post");
+			Elements divTags = sRawHtml.select(getString(R.string.find_div_tag));
 			
 			if (divTags.size() > 0) {
 				// Assuming we got any divs, take the first one.
@@ -289,8 +289,8 @@ public class GooseActivity extends Activity {
 				sPresentComicNumber = Integer.parseInt(presentNumber);
 				
 				// Grab the comic header and the img stuff.
-				Elements anchorTags = divTag.select("a[rel]");
-				Elements imageTags = divTag.select("img[src]");
+				Elements anchorTags = divTag.select(getString(R.string.find_anchor_tag));
+				Elements imageTags = divTag.select(getString(R.string.find_image_tag));
 
 				// See if we got any anchor tags.
 				if (anchorTags.size() > 0) {
@@ -298,14 +298,14 @@ public class GooseActivity extends Activity {
 					sComicTitle = anchorTags.first().ownText();
 				} else {
 					// There was no title for the comic. Use a default value.
-					sComicTitle = "Goose Reader";
+					sComicTitle = getString(R.string.app_name);
 				}
 				
 				// See if we got any image tags.
 				if (imageTags.size() > 0) {
 					// Nab the source of the image and the title.
-					String rawSource = imageTags.first().attr("src");
-					sAltText = imageTags.first().attr("title");
+					String rawSource = imageTags.first().attr(getString(R.string.image_source));
+					sAltText = imageTags.first().attr(getString(R.string.image_title));
 					// Send the image source to parsing.
 					parseImageSource(rawSource);
 				} else {

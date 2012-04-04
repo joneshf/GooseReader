@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, MainActivity!</string>
     <string name="app_name">Goose Reader</string>
     <string name="base_url">http://abstrusegoose.com/</string>
     <string name="loading_comic">Loading comic...</string>
-    <string name="find_title_tag">h3 a</string>
-    <string name="find_image_tag">img[class]</string>
-    <string name="find_comic_tag">span a:not([href=http://abstrusegoose.com/1])</string>
-    <string name="image_source">abs:src</string>
+    <string name="find_div_tag">.post</string>
+    <string name="find_anchor_tag">a[rel]</string>
+    <string name="find_image_tag">img[src]</string>
+    <string name="image_source">src</string>
     <string name="image_title">title</string>
-    <string name="hyperlink">href</string>
-    <string name="forward_slash">/</string>
 </resources>
