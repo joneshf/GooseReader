@@ -1,0 +1,6 @@
+Things to do:
+
+DONE Share comic URLs.
+Implement offline caching.
+Better UI.
+Settings screen.
