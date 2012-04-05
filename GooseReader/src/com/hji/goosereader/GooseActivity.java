@@ -120,7 +120,7 @@ public class GooseActivity extends Activity {
     	 * XXX There has to be a better way to keep the cache from filling.
     	 * Especially since this doesn't work.
     	 */
-    	sComicView.clearCache(true);
+//    	sComicView.clearCache(true);
     }
 
     /**
