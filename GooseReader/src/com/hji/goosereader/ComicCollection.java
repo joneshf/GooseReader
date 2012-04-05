@@ -19,29 +19,47 @@
 
 package com.hji.goosereader;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream.GetField;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 
+import android.content.Context;
+import android.os.Environment;
+
 /**
- * A collection to handle comics.
+ * A collection to handle comics for offline usage.
  * 
  * @author Hardy Jones III
  *
  */
 public class ComicCollection {
-	private int size;
-	private int currentNumber;
-	private String currentImage;
-	private Random randomNumber;
-	private List<Integer> comicNumbers;
-	private TreeMap<Integer, String> comicMap;
+	private boolean mExternalStorageAvailable;
+	private boolean mExternalStorageWritable;
+	private int mSize;
+	private int mCurrentNumber;
+	private String mCurrentImage;
+	private String mDirLocation;
+	private String mState;
+	private Random mRandomNumber;
+	private List<Integer> mComicNumbers;
+	private TreeMap<Integer, String> mComicMap;
 	
 	public ComicCollection() {
-		randomNumber = new Random();
-		comicMap = new TreeMap<Integer, String>();
-		comicNumbers = new ArrayList<Integer>();
+		mRandomNumber = new Random();
+		mComicMap = new TreeMap<Integer, String>();
+		mComicNumbers = new ArrayList<Integer>();
+		
+		// Check the status of the media.
+		checkMediaStatus();
 	}
 	
 	public void addComic(int number, String image) {
@@ -52,20 +70,20 @@ public class ComicCollection {
 		}
 		
 		// Check if we already have an element.
-		if (comicMap.containsKey(number)) {
+		if (mComicMap.containsKey(number)) {
 			// Do nothing here also.
 			return ;
 		}
 		
 		// We made it past the checks, so let's add the comic number to the list,
 		// and the number:image to the map.
-		comicNumbers.add(number);
-		comicMap.put(number, image);
+		mComicNumbers.add(number);
+		mComicMap.put(number, image);
 		// Set the currentNumber and image accordingly.
-		currentNumber = number;
-		currentImage = image;
+		mCurrentNumber = number;
+		mCurrentImage = image;
 		// increase the size of the collection.
-		size++;
+		mSize++;
 	}
 	
 	public void removeComic(int number) {
@@ -75,40 +93,40 @@ public class ComicCollection {
 			return ;
 		}
 		// Make sure we actually have this element.
-		if (!comicMap.containsKey(number)) {
+		if (!mComicMap.containsKey(number)) {
 			// Do nothing here also.
 			return ;
 		}
 		
 		// Get rid of the number from the list and map.
-		comicNumbers.remove(comicNumbers.indexOf(number));
-		comicMap.remove(number);
+		mComicNumbers.remove(mComicNumbers.indexOf(number));
+		mComicMap.remove(number);
 	}
 	
 	public int getComicNumber() {
-		return currentNumber;
+		return mCurrentNumber;
 	}
 	
 	public String getComicImage() {
-		return currentImage;
+		return mCurrentImage;
 	}
 	
 	// Navigation controls.
 	
 	public void first() {
 		// Set the current number to the first number in the list.
-		currentNumber = comicNumbers.get(0);
+		mCurrentNumber = mComicNumbers.get(0);
 		// Set the current image based on the current number.
 		setImage();
 	}
 	
 	public void previous() {
 		// Create an int to mark the position in the number list.
-		int position = comicNumbers.indexOf(currentNumber);
+		int position = mComicNumbers.indexOf(mCurrentNumber);
 		// Check that we're still in bounds.
 		if (position > 0) {
 			// Since we can go back one, at least, go back one.
-			currentNumber = comicNumbers.get(--position);
+			mCurrentNumber = mComicNumbers.get(--position);
 		}
 		// Either we're at the beginning, or we just moved back one.
 		// In either case, we're still in bounds so we can...		
@@ -118,19 +136,19 @@ public class ComicCollection {
 	
 	public void random() {
 		// Get a new random number and immediately access that number in the list.
-		currentNumber = comicNumbers.get(randomNumber.nextInt(size));
+		mCurrentNumber = mComicNumbers.get(mRandomNumber.nextInt(mSize));
 		// Set the currentImage based on the current number.
 		setImage();
 	}
 	
 	public void next() {
 		// Create an int to mark the position in the number list.
-		int position = comicNumbers.indexOf(currentNumber);
+		int position = mComicNumbers.indexOf(mCurrentNumber);
 		// Check that we're still in bounds.
 		// Increment here, so it makes comparison easier.
-		if (++position < size) {
+		if (++position < mSize) {
 			// Since we can go forward one, at least, go forward one.
-			currentNumber = comicNumbers.get(position);
+			mCurrentNumber = mComicNumbers.get(position);
 		}
 		// Either we're at the end, or we just moved forward one.
 		// In either case, we're still in bounds so we can...		
@@ -140,7 +158,7 @@ public class ComicCollection {
 	
 	public void last() {
 		// Set the current number to the last number in the list.
-		currentNumber = comicNumbers.get(size - 1);
+		mCurrentNumber = mComicNumbers.get(mSize - 1);
 		// Set the currentImage based on the current number.
 		setImage();
 	}
@@ -149,6 +167,58 @@ public class ComicCollection {
 	 * Sets the comic image based on the current number.
 	 */
 	private void setImage() {
-		currentImage = comicMap.get(currentNumber);
+		mCurrentImage = mComicMap.get(mCurrentNumber);
+	}
+	
+	private void checkMediaStatus() {
+		mState = Environment.getExternalStorageState();
+		
+		if (Environment.MEDIA_MOUNTED.equals(mState)) {
+			// The media is available and writable.
+			mExternalStorageAvailable = true;
+			mExternalStorageWritable = true;
+		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(mState)) {
+			// The media is available, but read only.
+			mExternalStorageAvailable = true;
+			mExternalStorageWritable = false;
+		} else {
+			// We cannot do anything with the media.
+			mExternalStorageAvailable = false;
+			mExternalStorageWritable = false;
+		}
+	}
+	
+	private void saveImage(String imageUrl) {
+		// Make sure we can write.
+		checkMediaStatus();
+		if (mExternalStorageAvailable && mExternalStorageWritable) {
+			try {
+				// Get the image.
+				URL url = new URL(imageUrl);
+				InputStream is = (InputStream) url.getContent();
+				// Create a file
+				File file = new File(Environment.getExternalStorageDirectory(), "/images/" + mCurrentImage);
+				// Create the output stream.
+				OutputStream os = new FileOutputStream(file);
+				// Create a byte buffer to read into and write from.
+				byte buffer[] = new byte[4096];
+				// Read the bytes, and check for nothing else having been read.
+				while (-1 != is.read(buffer)) {
+					// Write the bytes to the file.
+					os.write(buffer);
+				}
+				// Close the streams.
+				is.close();
+				os.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			// We cannot write, so don't do anything.
+		}
 	}
 }
