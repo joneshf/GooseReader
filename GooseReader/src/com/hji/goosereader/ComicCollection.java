@@ -103,19 +103,37 @@ public class ComicCollection {
 	}
 	
 	public void previous() {
-		
+		// Create an int to mark the position in the number list.
+		int position = comicNumbers.indexOf(currentNumber);
+		// Check that we're still in bounds.
+		if (position > 0) {
+			// Since we can go back one, at least, go back one.
+			currentNumber = comicNumbers.get(--position);
+		}
+		// Either we're at the beginning, or we just moved back one.
+		// In either case, we're still in bounds so we can...		
 		// Set the currentImage based on the current number.
 		setImage();
 	}
 	
 	public void random() {
-		
+		// Get a new random number and immediately access that number in the list.
+		currentNumber = comicNumbers.get(randomNumber.nextInt(size));
 		// Set the currentImage based on the current number.
 		setImage();
 	}
 	
 	public void next() {
-		
+		// Create an int to mark the position in the number list.
+		int position = comicNumbers.indexOf(currentNumber);
+		// Check that we're still in bounds.
+		// Increment here, so it makes comparison easier.
+		if (++position < size) {
+			// Since we can go forward one, at least, go forward one.
+			currentNumber = comicNumbers.get(position);
+		}
+		// Either we're at the end, or we just moved forward one.
+		// In either case, we're still in bounds so we can...		
 		// Set the currentImage based on the current number.
 		setImage();
 	}
