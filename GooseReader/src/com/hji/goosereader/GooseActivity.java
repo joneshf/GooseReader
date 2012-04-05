@@ -104,9 +104,14 @@ public class GooseActivity extends Activity {
     	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
     	// Let the user cancel it if need be.
     	loadingComic.setCancelable(true);
-    	// Scrapy scrapy.
-    	scrapeSite();
     	
+    	if (sOffline && sOfflineCollection.hasComic(sPresentComicNumber)) {
+    		sImageUrl = sOfflineCollection.getComicImage();
+    	} else {
+    		// Scrapy scrapy.
+    		scrapeSite();
+    	}
+
     	sComicView.loadUrl(sImageUrl);
     	sComicView.setWebChromeClient(new WebChromeClient() {
     		@Override
@@ -132,7 +137,25 @@ public class GooseActivity extends Activity {
 		
 		// XXX Testing offline.
 		if (sOffline) {
-
+			switch (button.getId()) {
+			case R.id.firstButton:
+				sOfflineCollection.first();
+				break;
+			case R.id.previousButton:
+				sOfflineCollection.previous();
+				break;
+			case R.id.randomButton:
+				sOfflineCollection.random();
+				break;
+			case R.id.nextButton:
+				sOfflineCollection.next();
+				break;
+			case R.id.currentButton:
+				sOfflineCollection.last();
+				break;
+			default:
+				break;
+			}
 		}
 		// XXX Testing offline.
 		else {
@@ -176,8 +199,9 @@ public class GooseActivity extends Activity {
 			default:
 				break;
 			}
-			loadComic();
 		}
+		
+		loadComic();
 	}
 	
 	/**
