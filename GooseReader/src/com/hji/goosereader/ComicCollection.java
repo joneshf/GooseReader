@@ -61,7 +61,9 @@ public class ComicCollection {
 		// and the number:image to the map.
 		comicNumbers.add(number);
 		comicMap.put(number, image);
-		
+		// Set the currentNumber and image accordingly.
+		currentNumber = number;
+		currentImage = image;
 		// increase the size of the collection.
 		size++;
 	}
@@ -89,5 +91,46 @@ public class ComicCollection {
 	
 	public String getComicImage() {
 		return currentImage;
+	}
+	
+	// Navigation controls.
+	
+	public void first() {
+		// Set the current number to the first number in the list.
+		currentNumber = comicNumbers.get(0);
+		// Set the current image based on the current number.
+		setImage();
+	}
+	
+	public void previous() {
+		
+		// Set the currentImage based on the current number.
+		setImage();
+	}
+	
+	public void random() {
+		
+		// Set the currentImage based on the current number.
+		setImage();
+	}
+	
+	public void next() {
+		
+		// Set the currentImage based on the current number.
+		setImage();
+	}
+	
+	public void last() {
+		// Set the current number to the last number in the list.
+		currentNumber = comicNumbers.get(size - 1);
+		// Set the currentImage based on the current number.
+		setImage();
+	}
+	
+	/**
+	 * Sets the comic image based on the current number.
+	 */
+	private void setImage() {
+		currentImage = comicMap.get(currentNumber);
 	}
 }
