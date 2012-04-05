@@ -33,6 +33,7 @@ import java.util.TreeMap;
 public class ComicCollection {
 	private int size;
 	private int currentNumber;
+	private String currentImage;
 	private Random randomNumber;
 	private List<Integer> comicNumbers;
 	private TreeMap<Integer, String> comicMap;
@@ -80,5 +81,13 @@ public class ComicCollection {
 		// Get rid of the number from the list and map.
 		comicNumbers.remove(comicNumbers.indexOf(number));
 		comicMap.remove(number);
+	}
+	
+	public int getComicNumber() {
+		return currentNumber;
+	}
+	
+	public String getComicImage() {
+		return currentImage;
 	}
 }
