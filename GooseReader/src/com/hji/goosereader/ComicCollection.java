@@ -24,7 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream.GetField;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 
-import android.content.Context;
 import android.os.Environment;
 
 /**
@@ -60,6 +58,11 @@ public class ComicCollection {
 		
 		// Check the status of the media.
 		checkMediaStatus();
+		// Set the directory location, if possible.
+		if (mExternalStorageAvailable) {
+			String topLevel = Environment.getExternalStorageDirectory().getPath();
+			mDirLocation = topLevel + "/Android/com.hardyjones.goosereader/images/";
+		}
 	}
 	
 	public void addComic(int number, String image) {
@@ -78,7 +81,7 @@ public class ComicCollection {
 		// We made it past the checks, so let's add the comic number to the list,
 		// and the number:image to the map.
 		mComicNumbers.add(number);
-		mComicMap.put(number, image);
+		mComicMap.put(number, mDirLocation + image);
 		// Set the currentNumber and image accordingly.
 		mCurrentNumber = number;
 		mCurrentImage = image;
@@ -130,14 +133,14 @@ public class ComicCollection {
 		}
 		// Either we're at the beginning, or we just moved back one.
 		// In either case, we're still in bounds so we can...		
-		// Set the currentImage based on the current number.
+		// Set the current image based on the current number.
 		setImage();
 	}
 	
 	public void random() {
 		// Get a new random number and immediately access that number in the list.
 		mCurrentNumber = mComicNumbers.get(mRandomNumber.nextInt(mSize));
-		// Set the currentImage based on the current number.
+		// Set the current image based on the current number.
 		setImage();
 	}
 	
@@ -152,14 +155,14 @@ public class ComicCollection {
 		}
 		// Either we're at the end, or we just moved forward one.
 		// In either case, we're still in bounds so we can...		
-		// Set the currentImage based on the current number.
+		// Set the current image based on the current number.
 		setImage();
 	}
 	
 	public void last() {
 		// Set the current number to the last number in the list.
 		mCurrentNumber = mComicNumbers.get(mSize - 1);
-		// Set the currentImage based on the current number.
+		// Set the current image based on the current number.
 		setImage();
 	}
 	
@@ -188,7 +191,7 @@ public class ComicCollection {
 		}
 	}
 	
-	private void saveImage(String imageUrl) {
+	public void saveImage(String imageUrl) {
 		// Make sure we can write.
 		checkMediaStatus();
 		if (mExternalStorageAvailable && mExternalStorageWritable) {
@@ -197,7 +200,7 @@ public class ComicCollection {
 				URL url = new URL(imageUrl);
 				InputStream is = (InputStream) url.getContent();
 				// Create a file
-				File file = new File(Environment.getExternalStorageDirectory(), "/images/" + mCurrentImage);
+				File file = new File(mDirLocation + mCurrentImage);
 				// Create the output stream.
 				OutputStream os = new FileOutputStream(file);
 				// Create a byte buffer to read into and write from.
@@ -220,5 +223,10 @@ public class ComicCollection {
 		} else {
 			// We cannot write, so don't do anything.
 		}
+	}
+	
+	public boolean hasComic(int number) {
+		// See if we have the number.
+		return mComicMap.containsKey(number);
 	}
 }

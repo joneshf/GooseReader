@@ -105,12 +105,22 @@ public class GooseActivity extends Activity {
     	// Let the user cancel it if need be.
     	loadingComic.setCancelable(true);
     	
-    	if (sOffline && sOfflineCollection.hasComic(sPresentComicNumber)) {
+    	// XXX Testing offline.
+    	if (sOfflineCollection.hasComic(sPresentComicNumber)) {
     		sImageUrl = sOfflineCollection.getComicImage();
     	} else {
     		// Scrapy scrapy.
     		scrapeSite();
+    		// Check if we're storing offline.
+    		if (sOffline) {
+    			// Add the comic, and save the image.
+    			sOfflineCollection.addComic(sPresentComicNumber, sImageName);
+    			sOfflineCollection.saveImage(sImageUrl);
+    			// Then use the local image to load.
+        		sImageUrl = sOfflineCollection.getComicImage();
+    		}
     	}
+    	// XXX Testing offline.
 
     	sComicView.loadUrl(sImageUrl);
     	sComicView.setWebChromeClient(new WebChromeClient() {
