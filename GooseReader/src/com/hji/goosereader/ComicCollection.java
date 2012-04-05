@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 
+import android.content.Context;
 import android.os.Environment;
+import android.widget.Toast;
 
 /**
  * A collection to handle comics for offline usage.
@@ -61,7 +63,12 @@ public class ComicCollection {
 		// Set the directory location, if possible.
 		if (mExternalStorageAvailable) {
 			String topLevel = Environment.getExternalStorageDirectory().getPath();
-			mDirLocation = topLevel + "/Android/com.hardyjones.goosereader/images/";
+			mDirLocation = topLevel + "/Android/data/com.hardyjones.goosereader/images";
+			// Try to make the folder if it doesn't exist.
+			File imageFolder = new File(mDirLocation);
+			if (!imageFolder.exists()) {
+				imageFolder.mkdirs();
+			}
 		}
 	}
 	
@@ -84,7 +91,8 @@ public class ComicCollection {
 		mComicMap.put(number, mDirLocation + image);
 		// Set the currentNumber and image accordingly.
 		mCurrentNumber = number;
-		mCurrentImage = image;
+		mCurrentImage = mDirLocation + image;
+//		saveImage(mCurrentImage);
 		// increase the size of the collection.
 		mSize++;
 	}
@@ -111,7 +119,7 @@ public class ComicCollection {
 	}
 	
 	public String getComicImage() {
-		return mCurrentImage;
+		return "file://" + mCurrentImage;
 	}
 	
 	// Navigation controls.
@@ -200,19 +208,21 @@ public class ComicCollection {
 				URL url = new URL(imageUrl);
 				InputStream is = (InputStream) url.getContent();
 				// Create a file
-				File file = new File(mDirLocation + mCurrentImage);
+				File file = new File(mCurrentImage);
 				// Create the output stream.
 				OutputStream os = new FileOutputStream(file);
 				// Create a byte buffer to read into and write from.
 				byte buffer[] = new byte[4096];
+				int bytesRead;
 				// Read the bytes, and check for nothing else having been read.
-				while (-1 != is.read(buffer)) {
+				while (-1 != (bytesRead = is.read(buffer))) {
 					// Write the bytes to the file.
-					os.write(buffer);
+					os.write(buffer, 0, bytesRead);
 				}
 				// Close the streams.
 				is.close();
 				os.close();
+				// Set the current image location.
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

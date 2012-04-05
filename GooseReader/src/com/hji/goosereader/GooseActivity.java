@@ -112,13 +112,13 @@ public class GooseActivity extends Activity {
     		// Scrapy scrapy.
     		scrapeSite();
     		// Check if we're storing offline.
-    		if (sOffline) {
+//    		if (sOffline) {
     			// Add the comic, and save the image.
-    			sOfflineCollection.addComic(sPresentComicNumber, sImageName);
-    			sOfflineCollection.saveImage(sImageUrl);
+//    			sOfflineCollection.addComic(sPresentComicNumber, sImageName);
+//    			sOfflineCollection.saveImage(sImageUrl);
     			// Then use the local image to load.
         		sImageUrl = sOfflineCollection.getComicImage();
-    		}
+//    		}
     	}
     	// XXX Testing offline.
 
@@ -412,6 +412,7 @@ public class GooseActivity extends Activity {
 					parseImageSource(rawSource);
 					// XXX Testing offline.
 			    	sOfflineCollection.addComic(sPresentComicNumber, sImageName);
+			    	sOfflineCollection.saveImage(sImageUrl);
 			    	// XXX Testing offline.
 				} else {
 					// There was no image tag.
