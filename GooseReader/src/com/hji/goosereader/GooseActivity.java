@@ -74,6 +74,12 @@ public class GooseActivity extends Activity {
     private static WebView sComicView;
 	private static Document sRawHtml;
 	
+	// XXX Testing offline.
+	private static boolean sOffline;
+	private static String sImageName;
+	private static ComicCollection sOfflineCollection;
+	// XXX Testing offline.
+	
 	/**
 	 * Parses the home page for the value of the current comic.
 	 */
@@ -124,46 +130,54 @@ public class GooseActivity extends Activity {
 	public void navigationButtonHandler(View button) {
 		button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 		
-		switch (button.getId()) {
-		case R.id.firstButton:
-			sPresentComicNumber = FIRST_COMIC_NUMBER;
-			break;
-		
-		/* 
-		 * Don't go past the beginning.
-		 * Comic 0 is actually the current comic.
-		 * Handle this like this case by going to the second newest comic.
-		 */
-		case R.id.previousButton:
-			switch (sPresentComicNumber) {
-			case 0:
-				sPresentComicNumber = sCurrentComicNumber - 1;
-				break;
-			case 1:
+		// XXX Testing offline.
+		if (sOffline) {
+
+		}
+		// XXX Testing offline.
+		else {
+
+			switch (button.getId()) {
+			case R.id.firstButton:
 				sPresentComicNumber = FIRST_COMIC_NUMBER;
 				break;
-			default:
-				sPresentComicNumber--;
-			}
-			break;
-		case R.id.randomButton:
-			sPresentComicNumber = sRandomNumber.nextInt(sCurrentComicNumber);
-			break;
-		/* Don't go past the end or comic 0, which is actually the current comic. */
-		case R.id.nextButton:
-			if ((sPresentComicNumber == sCurrentComicNumber) || (sPresentComicNumber == 0)) {
+
+				/* 
+				 * Don't go past the beginning.
+				 * Comic 0 is actually the current comic.
+				 * Handle this like this case by going to the second newest comic.
+				 */
+			case R.id.previousButton:
+				switch (sPresentComicNumber) {
+				case 0:
+					sPresentComicNumber = sCurrentComicNumber - 1;
+					break;
+				case 1:
+					sPresentComicNumber = FIRST_COMIC_NUMBER;
+					break;
+				default:
+					sPresentComicNumber--;
+				}
+				break;
+			case R.id.randomButton:
+				sPresentComicNumber = sRandomNumber.nextInt(sCurrentComicNumber);
+				break;
+				/* Don't go past the end or comic 0, which is actually the current comic. */
+			case R.id.nextButton:
+				if ((sPresentComicNumber == sCurrentComicNumber) || (sPresentComicNumber == 0)) {
+					sPresentComicNumber = sCurrentComicNumber;
+				} else {
+					sPresentComicNumber++;
+				}
+				break;
+			case R.id.currentButton:
 				sPresentComicNumber = sCurrentComicNumber;
-			} else {
-				sPresentComicNumber++;
+				break;
+			default:
+				break;
 			}
-			break;
-		case R.id.currentButton:
-			sPresentComicNumber = sCurrentComicNumber;
-			break;
-		default:
-			break;
+			loadComic();
 		}
-		loadComic();
 	}
 	
 	/**
@@ -189,10 +203,14 @@ public class GooseActivity extends Activity {
 
         /* Set up the navigation control layout if it is to be hidden. */
         sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
+
+    	// XXX Testing offline.
+    	sOfflineCollection = new ComicCollection();
+    	sOffline = false;
+    	// XXX Testing offline.
     	
         // Get the latest comic number.
     	findCurrentComic();
-
     }
     
     /**
@@ -248,6 +266,12 @@ public class GooseActivity extends Activity {
     		// Start the share intent.
     		shareComic();
     		break;
+		// XXX Testing offline.
+    	case R.id.offline:
+    		// Turn on offline mode.
+    		sOffline = true;
+    		break;
+		// XXX Testing offline.
     	default:
     		break;
     	}
@@ -270,6 +294,14 @@ public class GooseActivity extends Activity {
 			break;
     	}
     }
+    
+    // XXX Testing offline.
+    private void parseImageName(String rawString) {
+    	// Rip out everything from the last forward slash.
+    	sImageName = rawString.substring(rawString.lastIndexOf("/"));
+    }
+    // XXX Testing offline.
+    
 	
     /**
      * Ensures the string for the image source is a valid url.
@@ -279,6 +311,10 @@ public class GooseActivity extends Activity {
      * @param rawString  The datum to parse into a proper url. 
      */
     private void parseImageSource(String rawString) {
+        // XXX Testing offline.
+    	parseImageName(rawString);
+        // XXX Testing offline.
+
     	// Check if the image source has the base url on it.
     	if (!rawString.startsWith(getString(R.string.base_url))) {
     		// If it doesn't, prepend the string with the base_url,
@@ -340,6 +376,9 @@ public class GooseActivity extends Activity {
 					sAltText = imageTags.first().attr(getString(R.string.image_title));
 					// Send the image source to parsing.
 					parseImageSource(rawSource);
+					// XXX Testing offline.
+			    	sOfflineCollection.addComic(sPresentComicNumber, sImageName);
+			    	// XXX Testing offline.
 				} else {
 					// There was no image tag.
 					Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
