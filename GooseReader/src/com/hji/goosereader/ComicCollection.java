@@ -168,13 +168,6 @@ public class ComicCollection {
 		mCurrentNumber = mComicNumbers.get(mSize - 1);
 	}
 	
-	/**
-	 * Sets the comic image based on the current number.
-	 */
-	private void setImage() {
-		mCurrentImage = mComicMap.get(mCurrentNumber);
-	}
-	
 	private void checkMediaStatus() {
 		mState = Environment.getExternalStorageState();
 		
