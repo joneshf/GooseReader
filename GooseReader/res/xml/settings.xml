@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="DATA USAGE" >
+        <CheckBoxPreference
+            android:key="prefOfflineMode"
+            android:selectable="true"
+            android:summary="Allows viewing comics stored locally."
+            android:title="Offline mode" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="USER CONTROLS" >
+        <CheckBoxPreference
+            android:enabled="true"
+            android:key="prefNavigation"
+            android:selectable="true"
+            android:summary="Toggle navigation buttons."
+            android:summaryOff="Hide navigation buttons."
+            android:summaryOn="Show navigation buttons."
+            android:title="Navigation buttons" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

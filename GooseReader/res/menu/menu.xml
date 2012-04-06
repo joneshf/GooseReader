@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-	<group android:id="@+id/menuGroup">
-		<item 
-			android:id="@+id/toggleNavigation"
-			android:title="Toggle navigation controls"
-			android:titleCondensed="Toggle nav.">
-		</item>
-		<item 
-			android:id="@+id/info"
-			android:title="Info...">
-		</item>
-		<item
-		    android:id="@+id/refresh"
-		    android:title="Refresh">
-		</item>
-	<item android:id="@+id/share" android:titleCondensed="Share" android:title="Share Comic"></item></group>
-	
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <group android:id="@+id/menuGroup" >
+        <item
+            android:id="@+id/info"
+            android:title="Info...">
+        </item>
+        <item
+            android:id="@+id/refresh"
+            android:title="Refresh">
+        </item>
+        <item
+            android:id="@+id/share"
+            android:title="Share Comic"
+            android:titleCondensed="Share">
+        </item>
+        <item
+            android:id="@+id/settings"
+            android:title="Settings">
+        </item>
+    </group>
+
 </menu>

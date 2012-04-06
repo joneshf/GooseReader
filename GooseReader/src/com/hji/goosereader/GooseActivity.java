@@ -32,7 +32,9 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -73,6 +75,7 @@ public class GooseActivity extends Activity {
 	private static TextView sAltTextView;
     private static WebView sComicView;
 	private static Document sRawHtml;
+	private static SharedPreferences sSettings;
 	
 	/**
 	 * Parses the home page for the value of the current comic.
@@ -230,12 +233,6 @@ public class GooseActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
-    	case R.id.toggleNavigation:
-    		// Flip the boolean.
-    		sNavigation = !sNavigation;
-    		// Display/hide the nav.
-    		toggleNavigation();
-    		break;
     	case R.id.info:
     		// Bring up the alt-text.
     		showDialog(SHOW_INFO_DIALOG);
@@ -248,6 +245,11 @@ public class GooseActivity extends Activity {
     		// Start the share intent.
     		shareComic();
     		break;
+		case R.id.settings:
+			// Create an intent and start the settings activity.
+			Intent settings = new Intent(this, SettingsActivity.class);
+			startActivity(settings);
+			break;
     	default:
     		break;
     	}
@@ -271,7 +273,18 @@ public class GooseActivity extends Activity {
     	}
     }
 	
-    /**
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		// Load the settings.
+		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
+		sNavigation = sSettings.getBoolean("prefNavigation", true);
+		checkNavigation();
+
+	}
+
+	/**
      * Ensures the string for the image source is a valid url.
      * 
      * E.g.: parseImageSource("/comic37.PNG") -> "http://base_url/comic37.PNG"
@@ -374,7 +387,7 @@ public class GooseActivity extends Activity {
     /** 
      * Toggles the comic navigation on the screen.
      */
-    private void toggleNavigation() {
+    private void checkNavigation() {
     	if (sNavigation == true) {
     		sNavigationLayout.setVisibility(View.VISIBLE);
     	} else {

@@ -4,3 +4,4 @@ DONE Share comic URLs.
 Implement offline caching.
 Better UI.
 Settings screen.
+Move the progress dialog so it is more indicative of the actual progress.
