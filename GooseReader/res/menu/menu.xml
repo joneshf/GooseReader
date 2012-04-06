@@ -16,6 +16,7 @@
 		</item>
 	<item android:id="@+id/share" android:titleCondensed="Share" android:title="Share Comic"></item>
 	<item android:id="@+id/offline" android:title="Offline" android:titleCondensed="Offline"></item>
+	<item android:id="@+id/settings" android:title="Settings"></item>
 </group>
 	
 </menu>

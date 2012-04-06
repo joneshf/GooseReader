@@ -4,6 +4,6 @@
         <CheckBoxPreference 
             android:selectable="true"
             android:summary="Allows viewing comics stored locally."
-            android:title="Offline Mode"/>
+            android:title="Offline Mode" android:key="prefOfflineMode"/>
     </PreferenceCategory>
 </PreferenceScreen>

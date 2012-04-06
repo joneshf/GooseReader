@@ -17,4 +17,5 @@
     <string name="random_comic">Random Comic</string>
     <string name="share_message">Check out this comic:\n</string>
     <string name="share_title">Share Comic</string>
+    <string name="offline_mode">prefOfflineMode</string>
 </resources>

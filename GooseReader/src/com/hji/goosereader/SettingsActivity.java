@@ -1,16 +1,17 @@
 package com.hji.goosereader;
 
-import android.app.Activity;
-import android.os.Bundle;
+import com.hardyjones.goosereader.R;
 
-public class SettingsActivity extends Activity {
+import android.os.Bundle;
+import android.preference.PreferenceActivity;
+
+public class SettingsActivity extends PreferenceActivity {
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	
-	    // TODO Auto-generated method stub
+	    addPreferencesFromResource(R.xml.settings);
 	}
-
 }

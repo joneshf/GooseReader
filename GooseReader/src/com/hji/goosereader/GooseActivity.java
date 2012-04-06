@@ -32,7 +32,9 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,6 +80,7 @@ public class GooseActivity extends Activity {
 	private static boolean sOffline;
 	private static String sImageName;
 	private static ComicCollection sOfflineCollection;
+	private static SharedPreferences sSettings;
 	// XXX Testing offline.
 
 	/**
@@ -286,6 +289,11 @@ public class GooseActivity extends Activity {
 			sOffline = true;
 			break;
 			// XXX Testing offline.
+		case R.id.settings:
+			// Create an intent and start the settings activity.
+			Intent settings = new Intent(this, SettingsActivity.class);
+			startActivity(settings);
+			break;
 		default:
 			break;
 		}
@@ -308,6 +316,18 @@ public class GooseActivity extends Activity {
 		default:
 			break;
 		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		// XXX Testing offline.
+		// Load the settings.
+		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
+		sOffline = sSettings.getBoolean(getString(R.string.offline_mode), false);
+		// XXX Testing offline.
+
 	}
 
 	// XXX Testing offline.
