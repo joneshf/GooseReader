@@ -265,12 +265,6 @@ public class GooseActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.toggleNavigation:
-			// Flip the boolean.
-			sNavigation = !sNavigation;
-			// Display/hide the nav.
-			toggleNavigation();
-			break;
 		case R.id.info:
 			// Bring up the alt-text.
 			showDialog(SHOW_INFO_DIALOG);
@@ -283,12 +277,6 @@ public class GooseActivity extends Activity {
 			// Start the share intent.
 			shareComic();
 			break;
-			// XXX Testing offline.
-		case R.id.offline:
-			// Turn on offline mode.
-			sOffline = true;
-			break;
-			// XXX Testing offline.
 		case R.id.settings:
 			// Create an intent and start the settings activity.
 			Intent settings = new Intent(this, SettingsActivity.class);
@@ -322,11 +310,13 @@ public class GooseActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 
+		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
 		// XXX Testing offline.
 		// Load the settings.
-		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
 		sOffline = sSettings.getBoolean(getString(R.string.offline_mode), false);
 		// XXX Testing offline.
+		sNavigation = sSettings.getBoolean("prefNavigation", true);
+		checkNavigation();
 
 	}
 
@@ -448,7 +438,7 @@ public class GooseActivity extends Activity {
 	/** 
 	 * Toggles the comic navigation on the screen.
 	 */
-	private void toggleNavigation() {
+	private void checkNavigation() {
 		if (sNavigation == true) {
 			sNavigationLayout.setVisibility(View.VISIBLE);
 		} else {
