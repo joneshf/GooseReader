@@ -107,7 +107,7 @@ public class GooseActivity extends Activity {
     	
     	// XXX Testing offline.
     	if (sOfflineCollection.hasComic(sPresentComicNumber)) {
-    		sImageUrl = sOfflineCollection.getComicImage();
+    		sImageUrl = sOfflineCollection.getComicImage(sPresentComicNumber);
     	} else {
     		// Scrapy scrapy.
     		scrapeSite();
@@ -166,6 +166,9 @@ public class GooseActivity extends Activity {
 			default:
 				break;
 			}
+			
+			// Set the present number to the newly selected number.
+			sPresentComicNumber = sOfflineCollection.getComicNumber();
 		}
 		// XXX Testing offline.
 		else {

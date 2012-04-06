@@ -27,13 +27,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 
-import android.content.Context;
 import android.os.Environment;
-import android.widget.Toast;
 
 /**
  * A collection to handle comics for offline usage.
@@ -92,7 +91,8 @@ public class ComicCollection {
 		// Set the currentNumber and image accordingly.
 		mCurrentNumber = number;
 		mCurrentImage = mDirLocation + image;
-//		saveImage(mCurrentImage);
+		// Sort the comic numbers.
+		Collections.sort(mComicNumbers);
 		// increase the size of the collection.
 		mSize++;
 	}
@@ -119,7 +119,11 @@ public class ComicCollection {
 	}
 	
 	public String getComicImage() {
-		return "file://" + mCurrentImage;
+		return getComicImage(mCurrentNumber);
+	}
+	
+	public String getComicImage(int number) {
+		return "file://" + mComicMap.get(number);
 	}
 	
 	// Navigation controls.
@@ -127,8 +131,6 @@ public class ComicCollection {
 	public void first() {
 		// Set the current number to the first number in the list.
 		mCurrentNumber = mComicNumbers.get(0);
-		// Set the current image based on the current number.
-		setImage();
 	}
 	
 	public void previous() {
@@ -141,15 +143,11 @@ public class ComicCollection {
 		}
 		// Either we're at the beginning, or we just moved back one.
 		// In either case, we're still in bounds so we can...		
-		// Set the current image based on the current number.
-		setImage();
 	}
 	
 	public void random() {
 		// Get a new random number and immediately access that number in the list.
 		mCurrentNumber = mComicNumbers.get(mRandomNumber.nextInt(mSize));
-		// Set the current image based on the current number.
-		setImage();
 	}
 	
 	public void next() {
@@ -163,15 +161,11 @@ public class ComicCollection {
 		}
 		// Either we're at the end, or we just moved forward one.
 		// In either case, we're still in bounds so we can...		
-		// Set the current image based on the current number.
-		setImage();
 	}
 	
 	public void last() {
 		// Set the current number to the last number in the list.
 		mCurrentNumber = mComicNumbers.get(mSize - 1);
-		// Set the current image based on the current number.
-		setImage();
 	}
 	
 	/**
