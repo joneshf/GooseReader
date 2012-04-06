@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="Data Usage">
+        <CheckBoxPreference 
+            android:selectable="true"
+            android:summary="Allows viewing comics stored locally."
+            android:title="Offline Mode"/>
+    </PreferenceCategory>
+</PreferenceScreen>
