@@ -7,20 +7,21 @@ import android.util.Log;
 
 public class ComicOpenHelper extends SQLiteOpenHelper {
 
+	public static final String TABLE_COMICS = "comics";
+	public static final String COLUMN_ID = "_id";
+	public static final String COLUMN_NUMBER = "_number";
+	public static final String COLUMN_IMAGE = "_image";
+	public static final String COLUMN_TITLE = "_title";
+	public static final String COLUMN_TEXT = "_text";
+
 	private static final int DATABASE_VERSION = 1;
 	private static final String DATABASE_NAME = "comics.db";
-	private static final String TABLE_COMICS = "comics";
-	private static final String COLUMN_ID = "_id";
-	private static final String COLUMN_NUMBER = "_number";
-	private static final String COLUMN_URL = "_url";
-	private static final String COLUMN_TITLE = "_title";
-	private static final String COLUMN_TEXT = "_text";
 	// Statement used to create the database.
 	private static final String DATABASE_CREATE = "create table " +
 			TABLE_COMICS + "( " +
 			COLUMN_ID +	" integer primary key autoincrement, " +
 			COLUMN_NUMBER + " text not null, " +
-			COLUMN_URL + " text not null, " +
+			COLUMN_IMAGE + " text not null, " +
 			COLUMN_TITLE + " text not null, " +
 			COLUMN_TEXT + " text not null);"; 
 	

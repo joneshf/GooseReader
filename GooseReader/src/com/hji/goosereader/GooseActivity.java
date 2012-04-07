@@ -31,8 +31,11 @@ import org.jsoup.select.Elements;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.HapticFeedbackConstants;
@@ -68,6 +71,7 @@ public class GooseActivity extends Activity {
 	private static int sPresentComicNumber = 0;
 	private static String sAltText;
 	private static String sComicTitle;
+	private static String sImageName;
 	private static String sImageUrl;
 	private static String sPresentUrl;
 	private static Dialog sInfoDialog;
@@ -75,7 +79,15 @@ public class GooseActivity extends Activity {
 	private static TextView sAltTextView;
     private static WebView sComicView;
 	private static Document sRawHtml;
+	
 	private static SharedPreferences sSettings;
+    // XXX DB crap.
+	private static SQLiteDatabase sComicsDb;
+	private static ComicOpenHelper sComicsDbHelper;
+	private static String sNumberLookup[] = {/*ComicOpenHelper.COLUMN_IMAGE,
+		ComicOpenHelper.TABLE_COMICS, ComicOpenHelper.COLUMN_NUMBER, */""};
+	private static ContentValues sValues = new ContentValues();
+    // XXX DB crap.
 	
 	/**
 	 * Parses the home page for the value of the current comic.
@@ -101,8 +113,29 @@ public class GooseActivity extends Activity {
     	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
     	// Let the user cancel it if need be.
     	loadingComic.setCancelable(true);
-    	// Scrapy scrapy.
-    	scrapeSite();
+    	
+        // XXX DB crap.
+    	// Put the present comic number in the lookup string.
+    	sNumberLookup[0] = String.valueOf(sPresentComicNumber);
+    	// Check if we have the current comic already.
+    	Cursor cursor = sComicsDb.rawQuery("select _image from comics where _number = ?", sNumberLookup);
+    	if (cursor.getCount() > 0) {
+    		sImageUrl = "file://" + cursor.getString(0);
+    	} else {
+    		// Scrapy scrapy.
+    		scrapeSite();
+    		// Insert content into the content value.
+    		sValues.put("_number", sPresentComicNumber);
+    		sValues.put("_image", sImageName);
+    		sValues.put("_title", sComicTitle);
+    		sValues.put("_text", sAltText);
+    		// Add the info to the db.
+    		sComicsDb.insert("comics", null, sValues);
+    		
+    		// Set the image url.
+    		sImageUrl = "file://" + sImageName;
+    	}
+        // XXX DB crap.
     	
     	sComicView.loadUrl(sImageUrl);
     	sComicView.setWebChromeClient(new WebChromeClient() {
@@ -193,6 +226,11 @@ public class GooseActivity extends Activity {
         /* Set up the navigation control layout if it is to be hidden. */
         sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
     	
+        // XXX DB crap.
+        // Get the database set up.
+        sComicsDbHelper = new ComicOpenHelper(this);
+        sComicsDb = sComicsDbHelper.getWritableDatabase();
+        // XXX DB crap.
         // Get the latest comic number.
     	findCurrentComic();
 
@@ -284,6 +322,11 @@ public class GooseActivity extends Activity {
 
 	}
 
+	private void parseImageName(String rawString) {
+		// Rip out everything from the last forward slash.
+		sImageName = rawString.substring(rawString.lastIndexOf("/"));
+	}
+
 	/**
      * Ensures the string for the image source is a valid url.
      * 
@@ -292,6 +335,8 @@ public class GooseActivity extends Activity {
      * @param rawString  The datum to parse into a proper url. 
      */
     private void parseImageSource(String rawString) {
+    	// Set just the image name.
+    	parseImageName(rawString);
     	// Check if the image source has the base url on it.
     	if (!rawString.startsWith(getString(R.string.base_url))) {
     		// If it doesn't, prepend the string with the base_url,
