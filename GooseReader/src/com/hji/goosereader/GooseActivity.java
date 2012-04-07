@@ -197,6 +197,15 @@ public class GooseActivity extends Activity {
     	sComicView.clearCache(true);
     }
 
+    private void loadSettings() {
+		// Load the settings.
+		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
+		sNavigation = sSettings.getBoolean("prefNavigation", true);
+		sOffline = sSettings.getBoolean("prefOfflineMode", false);
+		sSaveLocal = sSettings.getBoolean("prefSaveLocal", true);
+		checkNavigation();
+    }
+    
     /**
      * Handles each button in the navigation layout.
      * @param button The button that performed the event.
@@ -270,7 +279,7 @@ public class GooseActivity extends Activity {
 				// Move the cursor to this row, or the beginning if none are lower.
 				Cursor prevCursor = sComicsDb.rawQuery(
 						"select _number from comics where _number < " + sPresentComicNumber +
-						" order by _number asc", null);
+						" order by _number desc", null);
 				if (prevCursor.getCount() > 0){
 					// There's at least one comic less than the present one.
 					// Copy the prevCursor to the mCursor and work with that.
@@ -293,9 +302,12 @@ public class GooseActivity extends Activity {
 					// There's at least one comic less than the present one.
 					// Copy the prevCursor to the mCursor and work with that.
 					mCursor = nextCursor;
+					// Move the cursor to the first row.
+					mCursor.moveToFirst();
+				} else {
+					// Otherwise, we're at the greatest comic number stored.
+					mCursor.moveToLast();
 				}
-				// Move the cursor to the first row.
-				mCursor.moveToFirst();
 				break;
 			case R.id.currentButton:
 				mCursor.moveToLast();
@@ -336,11 +348,29 @@ public class GooseActivity extends Activity {
 		/* Set up the navigation control layout if it is to be hidden. */
 		sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
 
+		loadSettings();
 		// XXX DB crap.
 		// Get the database set up.
+		checkMediaStatus();
 		sComicsDbHelper = new ComicOpenHelper(this);
 		sComicsDb = sComicsDbHelper.getWritableDatabase();
-		// XXX DB crap.
+		if (mExternalStorageAvailable) {
+			String topLevel = Environment.getExternalStorageDirectory().getPath();
+			mDirLocation = topLevel + "/Android/data/com.hardyjones.goosereader/images";
+			// Try to make the folder if it doesn't exist.
+			File imageFolder = new File(mDirLocation);
+			File noMedia = new File(mDirLocation + "/.nomedia");
+			if (!imageFolder.exists() && mExternalStorageWritable) {
+				try {
+					imageFolder.mkdirs();
+					noMedia.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	    // XXX DB crap.
 		// Get the latest comic number.
 		findCurrentComic();
 
@@ -414,22 +444,18 @@ public class GooseActivity extends Activity {
     protected void onPrepareDialog (int id, Dialog dialog) {
     	switch (id) {
     	case SHOW_INFO_DIALOG:
-    		checkMediaStatus();
-    		if (mExternalStorageAvailable) {
-    			mCursor = sComicsDb.rawQuery("select * from comics where _number = " + sPresentComicNumber, null);
-    			if (mCursor.getCount() > 0) {
-    				mCursor.moveToFirst();
-    				sInfoDialog.setTitle(mCursor.getString(3));
-    				sAltTextView.setText(mCursor.getString(4));
-    			} else {
-    	    		sInfoDialog.setTitle(sComicTitle);
-    				sAltTextView.setText(sAltText);
-    			}
-    		} else {
-    			sInfoDialog.setTitle(sComicTitle);
-    			sAltTextView.setText(sAltText);
+    		// Query the database.
+    		mCursor = sComicsDb.rawQuery("select * from comics where _number = " + sPresentComicNumber, null);
+    		if (mCursor.getCount() > 0) {
+    			// Get the correct title and alt text.
+    			mCursor.moveToFirst();
+    			sComicTitle = mCursor.getString(3);
+    			sAltText = mCursor.getString(4);
     		}
-		default:
+    		// Set the dialog title and text.
+    		sInfoDialog.setTitle(sComicTitle);
+    		sAltTextView.setText(sAltText);
+    	default:
 			break;
     	}
     }
@@ -438,25 +464,7 @@ public class GooseActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 
-		// Load the settings.
-		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
-		sNavigation = sSettings.getBoolean("prefNavigation", true);
-		sOffline = sSettings.getBoolean("prefOfflineMode", false);
-		sSaveLocal = sSettings.getBoolean("prefSaveLocal", true);
-		checkNavigation();
-		
-	    // XXX DB crap.
-		checkMediaStatus();
-		if (mExternalStorageAvailable) {
-			String topLevel = Environment.getExternalStorageDirectory().getPath();
-			mDirLocation = topLevel + "/Android/data/com.hardyjones.goosereader/images";
-			// Try to make the folder if it doesn't exist.
-			File imageFolder = new File(mDirLocation);
-			if (!imageFolder.exists()) {
-				imageFolder.mkdirs();
-			}
-		}
-	    // XXX DB crap.
+		loadSettings();
 	}
 
 	private void parseImageName(String rawString) {
@@ -595,7 +603,7 @@ public class GooseActivity extends Activity {
     	// Let's use just plain text.
     	shareIntent.setType(getString(R.string.plain_text));
     	// Create the content.
-    	String comicLink = getString(R.string.share_message) + sPresentUrl;
+    	String comicLink = getString(R.string.share_message) + getString(R.string.base_url) + sPresentComicNumber;
     	// Pass it to the intent.
     	shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, comicLink);
     	// Call the activity.

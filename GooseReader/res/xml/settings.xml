@@ -5,23 +5,20 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:selectable="true"
-            android:summary="Store comics locally to decrease loading time."
+            android:summary="Store comics on the device.\nDecreases loading time."
             android:title="Save comics" android:key="prefSaveLocal"/>
         <CheckBoxPreference
             android:key="prefOfflineMode"
             android:selectable="true"
-            android:summary="Allows viewing comics stored locally."
+            android:summary="Only browse saved comics."
             android:title="Offline mode" />
     </PreferenceCategory>
     <PreferenceCategory android:title="USER CONTROLS" >
         <CheckBoxPreference
-            android:enabled="true"
             android:key="prefNavigation"
             android:selectable="true"
-            android:summary="Toggle navigation buttons."
-            android:summaryOff="Hide navigation buttons."
-            android:summaryOn="Show navigation buttons."
-            android:title="Navigation buttons" />
+            android:summary="Display navigation buttons."
+            android:title="Navigation buttons" android:defaultValue="true"/>
     </PreferenceCategory>
 
 </PreferenceScreen>
