@@ -204,62 +204,128 @@ public class GooseActivity extends Activity {
 	public void navigationButtonHandler(View button) {
 		button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 		
-		switch (button.getId()) {
-		case R.id.firstButton:
-			sPresentComicNumber = FIRST_COMIC_NUMBER;
-			break;
-		
-		/* 
-		 * Don't go past the beginning.
-		 * Comic 0 is actually the current comic.
-		 * Handle this like this case by going to the second newest comic.
-		 */
-		case R.id.previousButton:
-			switch (sPresentComicNumber) {
-			case 0:
-				sPresentComicNumber = sCurrentComicNumber - 1;
-				break;
-			case 1:
+		// Check if we're supposed to be using offline comics.
+		if (sOffline) {
+			// Call the offline version of this.
+			offlineNav(button);
+		} else {
+			// We're just doing things normally.
+			switch (button.getId()) {
+			case R.id.firstButton:
 				sPresentComicNumber = FIRST_COMIC_NUMBER;
 				break;
-			default:
-				sPresentComicNumber--;
-			}
-			break;
-		case R.id.randomButton:
-			sPresentComicNumber = sRandomNumber.nextInt(sCurrentComicNumber);
-			break;
-		/* Don't go past the end or comic 0, which is actually the current comic. */
-		case R.id.nextButton:
-			if ((sPresentComicNumber == sCurrentComicNumber) || (sPresentComicNumber == 0)) {
+
+				/* 
+				 * Don't go past the beginning.
+				 * Comic 0 is actually the current comic.
+				 * Handle this like this case by going to the second newest comic.
+				 */
+			case R.id.previousButton:
+				switch (sPresentComicNumber) {
+				case 0:
+					sPresentComicNumber = sCurrentComicNumber - 1;
+					break;
+				case 1:
+					sPresentComicNumber = FIRST_COMIC_NUMBER;
+					break;
+				default:
+					sPresentComicNumber--;
+				}
+				break;
+			case R.id.randomButton:
+				sPresentComicNumber = sRandomNumber.nextInt(sCurrentComicNumber);
+				break;
+				/* Don't go past the end or comic 0, which is actually the current comic. */
+			case R.id.nextButton:
+				if ((sPresentComicNumber == sCurrentComicNumber) || (sPresentComicNumber == 0)) {
+					sPresentComicNumber = sCurrentComicNumber;
+				} else {
+					sPresentComicNumber++;
+				}
+				break;
+			case R.id.currentButton:
 				sPresentComicNumber = sCurrentComicNumber;
-			} else {
-				sPresentComicNumber++;
+				break;
+			default:
+				break;
 			}
-			break;
-		case R.id.currentButton:
-			sPresentComicNumber = sCurrentComicNumber;
-			break;
-		default:
-			break;
 		}
 		loadComic();
 	}
 	
+	private void offlineNav(View button) {
+		int cursorSize;
+		// First we need the comics we can work with.
+		mCursor = sComicsDb.rawQuery("select _number from comics order by _number asc", null);
+		cursorSize = mCursor.getCount();
+		
+		if (cursorSize > 0) {
+			switch (button.getId()) {
+			case R.id.firstButton:
+				// Move the cursor to the first row.
+				mCursor.moveToFirst();
+				break;
+			case R.id.previousButton:
+				// Find the first comic number lower than the present value.
+				// Move the cursor to this row, or the beginning if none are lower.
+				Cursor prevCursor = sComicsDb.rawQuery(
+						"select _number from comics where _number < " + sPresentComicNumber +
+						" order by _number asc", null);
+				if (prevCursor.getCount() > 0){
+					// There's at least one comic less than the present one.
+					// Copy the prevCursor to the mCursor and work with that.
+					mCursor = prevCursor;
+				}
+				// Move the cursor to the first row.
+				mCursor.moveToFirst();
+				break;
+			case R.id.randomButton:
+				// Move the cursor to some random row.
+				mCursor.moveToPosition(sRandomNumber.nextInt(cursorSize));
+				break;
+			case R.id.nextButton:
+				// Find the first comic number higher than the present value.
+				// Move the cursor to this row, or the beginning if none are higher.
+				Cursor nextCursor = sComicsDb.rawQuery(
+						"select _number from comics where _number > " + sPresentComicNumber +
+						" order by _number asc", null);
+				if (nextCursor.getCount() > 0){
+					// There's at least one comic less than the present one.
+					// Copy the prevCursor to the mCursor and work with that.
+					mCursor = nextCursor;
+				}
+				// Move the cursor to the first row.
+				mCursor.moveToFirst();
+				break;
+			case R.id.currentButton:
+				mCursor.moveToLast();
+				break;
+			default:
+				break;
+			}
+
+			// Now that the cursor is in the right position.
+			// Get the comic number.
+			sPresentComicNumber = mCursor.getInt(0);
+		} else {
+			Toast.makeText(getApplicationContext(), "There are no comics", Toast.LENGTH_SHORT).show();
+		}
+	}
+
 	/**
 	 * Called when the activity is first created.
 	 */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        
-        /* Set up the webview */
-        sComicView = (WebView) findViewById(R.id.comicView);
-        sComicView.getSettings().setBuiltInZoomControls(true);
-        sComicView.getSettings().setLoadWithOverviewMode(true);
-        sComicView.getSettings().setUseWideViewPort(true);
-        sComicView.setOnLongClickListener(new OnLongClickListener() {
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		/* Set up the webview */
+		sComicView = (WebView) findViewById(R.id.comicView);
+		sComicView.getSettings().setBuiltInZoomControls(true);
+		sComicView.getSettings().setLoadWithOverviewMode(true);
+		sComicView.getSettings().setUseWideViewPort(true);
+		sComicView.setOnLongClickListener(new OnLongClickListener() {
 			public boolean onLongClick(View v) {
 				showDialog(SHOW_INFO_DIALOG);
 
@@ -267,19 +333,19 @@ public class GooseActivity extends Activity {
 			}
 		});
 
-        /* Set up the navigation control layout if it is to be hidden. */
-        sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
-    	
-        // XXX DB crap.
-        // Get the database set up.
-        sComicsDbHelper = new ComicOpenHelper(this);
-        sComicsDb = sComicsDbHelper.getWritableDatabase();
-        // XXX DB crap.
-        // Get the latest comic number.
-    	findCurrentComic();
+		/* Set up the navigation control layout if it is to be hidden. */
+		sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
 
-    }
-    
+		// XXX DB crap.
+		// Get the database set up.
+		sComicsDbHelper = new ComicOpenHelper(this);
+		sComicsDb = sComicsDbHelper.getWritableDatabase();
+		// XXX DB crap.
+		// Get the latest comic number.
+		findCurrentComic();
+
+	}
+
     /**
      * Creates a dialog for the alt text.
      */

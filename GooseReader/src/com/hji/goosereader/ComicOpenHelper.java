@@ -20,7 +20,7 @@ public class ComicOpenHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_CREATE = "create table " +
 			TABLE_COMICS + "( " +
 			COLUMN_ID +	" integer primary key autoincrement, " +
-			COLUMN_NUMBER + " text not null, " +
+			COLUMN_NUMBER + " integer, " +
 			COLUMN_IMAGE + " text not null, " +
 			COLUMN_TITLE + " text not null, " +
 			COLUMN_TEXT + " text not null);"; 

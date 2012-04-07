@@ -10,7 +10,7 @@
     <string name="image_title">title</string>
     <string name="latest_comic">Latest Comic</string>
     <string name="loading_comic">Loading comic...</string>
-    <string name="loading_error">There was an error loading this comic.\nYou can refresh from the menu to retry.</string>
+    <string name="loading_error">There was an error loading this comic.</string>
     <string name="next_comic">Next Comic</string>
     <string name="plain_text">text/plain</string>
     <string name="previous_comic">Previous Comic</string>
