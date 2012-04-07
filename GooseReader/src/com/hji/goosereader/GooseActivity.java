@@ -343,8 +343,21 @@ public class GooseActivity extends Activity {
     protected void onPrepareDialog (int id, Dialog dialog) {
     	switch (id) {
     	case SHOW_INFO_DIALOG:
-    		sInfoDialog.setTitle(sComicTitle);
-			sAltTextView.setText(sAltText);
+    		checkMediaStatus();
+    		if (mExternalStorageAvailable) {
+    			mCursor = sComicsDb.rawQuery("select * from comics where _number = " + sPresentComicNumber, null);
+    			if (mCursor.getCount() > 0) {
+    				mCursor.moveToFirst();
+    				sInfoDialog.setTitle(mCursor.getString(3));
+    				sAltTextView.setText(mCursor.getString(4));
+    			} else {
+    	    		sInfoDialog.setTitle(sComicTitle);
+    				sAltTextView.setText(sAltText);
+    			}
+    		} else {
+    			sInfoDialog.setTitle(sComicTitle);
+    			sAltTextView.setText(sAltText);
+    		}
 		default:
 			break;
     	}
