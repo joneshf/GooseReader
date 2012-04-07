@@ -20,7 +20,13 @@
 
 package com.hji.goosereader;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.Random;
 
 import org.jsoup.Jsoup;
@@ -37,6 +43,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
@@ -87,6 +94,31 @@ public class GooseActivity extends Activity {
 	private static String sNumberLookup[] = {/*ComicOpenHelper.COLUMN_IMAGE,
 		ComicOpenHelper.TABLE_COMICS, ComicOpenHelper.COLUMN_NUMBER, */""};
 	private static ContentValues sValues = new ContentValues();
+	private boolean mExternalStorageAvailable;
+	private boolean mExternalStorageWritable;
+	private String mState;
+	private String mDirLocation;
+	private Cursor mCursor;
+    // XXX DB crap.
+	
+    // XXX DB crap.
+	private void checkMediaStatus() {
+		mState = Environment.getExternalStorageState();
+
+		if (Environment.MEDIA_MOUNTED.equals(mState)) {
+			// The media is available and writable.
+			mExternalStorageAvailable = true;
+			mExternalStorageWritable = true;
+		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(mState)) {
+			// The media is available, but read only.
+			mExternalStorageAvailable = true;
+			mExternalStorageWritable = false;
+		} else {
+			// We cannot do anything with the media.
+			mExternalStorageAvailable = false;
+			mExternalStorageWritable = false;
+		}
+	}
     // XXX DB crap.
 	
 	/**
@@ -118,25 +150,31 @@ public class GooseActivity extends Activity {
     	// Put the present comic number in the lookup string.
     	sNumberLookup[0] = String.valueOf(sPresentComicNumber);
     	// Check if we have the current comic already.
-    	Cursor cursor = sComicsDb.rawQuery("select _image from comics where _number = ?", sNumberLookup);
-    	if (cursor.getCount() > 0) {
-    		cursor.moveToFirst();
-    		sImageUrl = "file://" + cursor.getString(0);
+    	if (mExternalStorageAvailable) {
+    		mCursor = sComicsDb.rawQuery("select _image from comics where _number = ?", sNumberLookup);
+    	   	if (mCursor.getCount() > 0) {
+    	   		mCursor.moveToFirst();
+    	   		sImageUrl = "file://" + mDirLocation + mCursor.getString(0);
+    	   	} else {
+    	   		// Scrapy scrapy.
+    	   		scrapeSite();
+    	   		// Insert content into the content value.
+    	   		sValues.put("_number", sPresentComicNumber);
+    	   		sValues.put("_image", sImageName);
+    	   		sValues.put("_title", sComicTitle);
+    	   		sValues.put("_text", sAltText);
+    	   		// Add the info to the db.
+    	   		sComicsDb.insert("comics", null, sValues);
+    	   		// Save the file.
+    	   		saveImage(sImageUrl);
+
+    	   		// Set the image url.
+    	   		sImageUrl = "file://" + mDirLocation + sImageName;
+    	   	}
     	} else {
-    		// Scrapy scrapy.
     		scrapeSite();
-    		// Insert content into the content value.
-    		sValues.put("_number", sPresentComicNumber);
-    		sValues.put("_image", sImageName);
-    		sValues.put("_title", sComicTitle);
-    		sValues.put("_text", sAltText);
-    		// Add the info to the db.
-    		sComicsDb.insert("comics", null, sValues);
-    		
-    		// Set the image url.
-    		sImageUrl = "file://" + sImageName;
     	}
-        // XXX DB crap.
+	   	// XXX DB crap.
     	
     	sComicView.loadUrl(sImageUrl);
     	sComicView.setWebChromeClient(new WebChromeClient() {
@@ -320,7 +358,19 @@ public class GooseActivity extends Activity {
 		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
 		sNavigation = sSettings.getBoolean("prefNavigation", true);
 		checkNavigation();
-
+		
+	    // XXX DB crap.
+		checkMediaStatus();
+		if (mExternalStorageAvailable) {
+			String topLevel = Environment.getExternalStorageDirectory().getPath();
+			mDirLocation = topLevel + "/Android/data/com.hardyjones.goosereader/images";
+			// Try to make the folder if it doesn't exist.
+			File imageFolder = new File(mDirLocation);
+			if (!imageFolder.exists()) {
+				imageFolder.mkdirs();
+			}
+		}
+	    // XXX DB crap.
 	}
 
 	private void parseImageName(String rawString) {
@@ -348,6 +398,42 @@ public class GooseActivity extends Activity {
     		sImageUrl = rawString;
     	}
     }
+    
+	public void saveImage(String imageUrl) {
+		// Make sure we can write.
+		checkMediaStatus();
+		if (mExternalStorageAvailable && mExternalStorageWritable) {
+			try {
+				// Get the image.
+				URL url = new URL(imageUrl);
+				InputStream is = (InputStream) url.getContent();
+				// Create a file
+				File file = new File(mDirLocation + sImageName);
+				// Create the output stream.
+				OutputStream os = new FileOutputStream(file);
+				// Create a byte buffer to read into and write from.
+				byte buffer[] = new byte[4096];
+				int bytesRead;
+				// Read the bytes, and check for nothing else having been read.
+				while (-1 != (bytesRead = is.read(buffer))) {
+					// Write the bytes to the file.
+					os.write(buffer, 0, bytesRead);
+				}
+				// Close the streams.
+				is.close();
+				os.close();
+				// Set the current image location.
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			// We cannot write, so don't do anything.
+		}
+	}
     
     /**
      * Does a whole mess of stuff.
