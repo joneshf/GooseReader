@@ -120,6 +120,7 @@ public class GooseActivity extends Activity {
     	// Check if we have the current comic already.
     	Cursor cursor = sComicsDb.rawQuery("select _image from comics where _number = ?", sNumberLookup);
     	if (cursor.getCount() > 0) {
+    		cursor.moveToFirst();
     		sImageUrl = "file://" + cursor.getString(0);
     	} else {
     		// Scrapy scrapy.
