@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.Random;
 
@@ -94,6 +95,8 @@ public class GooseActivity extends Activity {
 	private static String sNumberLookup[] = {/*ComicOpenHelper.COLUMN_IMAGE,
 		ComicOpenHelper.TABLE_COMICS, ComicOpenHelper.COLUMN_NUMBER, */""};
 	private static ContentValues sValues = new ContentValues();
+	private static boolean sOffline;
+	private static boolean sSaveLocal;
 	private boolean mExternalStorageAvailable;
 	private boolean mExternalStorageWritable;
 	private String mState;
@@ -158,18 +161,20 @@ public class GooseActivity extends Activity {
     	   	} else {
     	   		// Scrapy scrapy.
     	   		scrapeSite();
-    	   		// Insert content into the content value.
-    	   		sValues.put("_number", sPresentComicNumber);
-    	   		sValues.put("_image", sImageName);
-    	   		sValues.put("_title", sComicTitle);
-    	   		sValues.put("_text", sAltText);
-    	   		// Add the info to the db.
-    	   		sComicsDb.insert("comics", null, sValues);
-    	   		// Save the file.
-    	   		saveImage(sImageUrl);
-
-    	   		// Set the image url.
-    	   		sImageUrl = "file://" + mDirLocation + sImageName;
+    	   		
+    	   		if (sSaveLocal && mExternalStorageWritable) {
+    	   			// Insert content into the content value.
+    	   			sValues.put("_number", sPresentComicNumber);
+    	   			sValues.put("_image", sImageName);
+    	   			sValues.put("_title", sComicTitle);
+    	   			sValues.put("_text", sAltText);
+    	   			// Add the info to the db.
+    	   			sComicsDb.insert("comics", null, sValues);
+    	   			// Save the file.
+    	   			saveImage(sImageUrl);
+    	   			// Set the image url.
+    	   			sImageUrl = "file://" + mDirLocation + sImageName;
+    	   		}
     	   	}
     	} else {
     		scrapeSite();
@@ -370,6 +375,8 @@ public class GooseActivity extends Activity {
 		// Load the settings.
 		sSettings = PreferenceManager.getDefaultSharedPreferences(this);
 		sNavigation = sSettings.getBoolean("prefNavigation", true);
+		sOffline = sSettings.getBoolean("prefOfflineMode", false);
+		sSaveLocal = sSettings.getBoolean("prefSaveLocal", true);
 		checkNavigation();
 		
 	    // XXX DB crap.

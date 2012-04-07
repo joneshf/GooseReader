@@ -3,6 +3,11 @@
 
     <PreferenceCategory android:title="DATA USAGE" >
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:selectable="true"
+            android:summary="Store comics locally to decrease loading time."
+            android:title="Save comics" android:key="prefSaveLocal"/>
+        <CheckBoxPreference
             android:key="prefOfflineMode"
             android:selectable="true"
             android:summary="Allows viewing comics stored locally."
