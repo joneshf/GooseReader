@@ -12,6 +12,7 @@
             android:selectable="true"
             android:summary="Only browse saved comics."
             android:title="Offline mode" />
+        <Preference android:selectable="true" android:title="Delete comics" android:summary="Removes all stored comics." android:key="prefDeleteComics"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="USER CONTROLS" >
         <CheckBoxPreference

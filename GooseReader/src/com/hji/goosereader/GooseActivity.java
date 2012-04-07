@@ -26,9 +26,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.Random;
+import java.util.prefs.PreferenceChangeListener;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -41,10 +41,13 @@ import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
@@ -89,6 +92,7 @@ public class GooseActivity extends Activity {
 	private static Document sRawHtml;
 	
 	private static SharedPreferences sSettings;
+	private static OnSharedPreferenceChangeListener sSettingsListener;
     // XXX DB crap.
 	private static SQLiteDatabase sComicsDb;
 	private static ComicOpenHelper sComicsDbHelper;
@@ -123,7 +127,7 @@ public class GooseActivity extends Activity {
 		}
 	}
     // XXX DB crap.
-	
+
 	/**
 	 * Parses the home page for the value of the current comic.
 	 */
@@ -347,8 +351,23 @@ public class GooseActivity extends Activity {
 
 		/* Set up the navigation control layout if it is to be hidden. */
 		sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
+		
+		// Set up a listener for the settings.
+		sSettingsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+			
+			public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+					String key) {
+				Toast.makeText(getApplicationContext(), key, Toast.LENGTH_SHORT);
+					sNavigation = sSettings.getBoolean("prefNavigation", true);
+					sOffline = sSettings.getBoolean("prefOfflineMode", false);
+					sSaveLocal = sSettings.getBoolean("prefSaveLocal", true);
+					checkNavigation();
+			}
+		};
 
 		loadSettings();
+		sSettings.registerOnSharedPreferenceChangeListener(sSettingsListener);
+
 		// XXX DB crap.
 		// Get the database set up.
 		checkMediaStatus();
@@ -464,7 +483,7 @@ public class GooseActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 
-		loadSettings();
+//		loadSettings();
 	}
 
 	private void parseImageName(String rawString) {
