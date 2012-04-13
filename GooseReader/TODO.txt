@@ -1,5 +1,8 @@
 Things to do:
 
+XXX
+ANR keyDispatchingTimedOut in scrapeSite.  Move this to another thread.
+XXX
 DONE Share comic URLs.
 Implement offline caching.
 Better UI.
