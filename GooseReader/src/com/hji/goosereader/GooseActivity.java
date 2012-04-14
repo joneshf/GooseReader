@@ -73,28 +73,15 @@ public class GooseActivity extends Activity {
 	private static String sImageUrl;
 	private static String sPresentUrl;
 	private static Dialog sInfoDialog;
+	private static Document sRawHtml;
 	private static LinearLayout sNavigationLayout;
+	private static ProgressDialog sLoadingComic; 
 	private static TextView sAltTextView;
     private static WebView sComicView;
-	private static Document sRawHtml;
-	private static ProgressDialog sLoadingComic; 
 	
-	/**
-	 * Parses the home page for the value of the current comic.
-	 */
-    private void findCurrentComic() {
-//    	// It's scrapin' time!
-//    	scrapeSite();
-//    	// Set scraped to true, so we don't have to do this again so soon.
-//    	sScraped = true;
-//    	// Display this latest comic.
-    	loadComic();
-    	// Reset scraped to false, so things will work like they should.
-    	sScraped = false;
-    }
 
     /**
-     * Loads the present comic URL into the webview.
+     * Starts {@link scrapeSiteTask} in another thread to load the comic into the webview.
      */
     private void loadComic() {
     	new scrapeSiteTask(this).execute();
@@ -111,34 +98,16 @@ public class GooseActivity extends Activity {
 		case R.id.firstButton:
 			sPresentComicNumber = FIRST_COMIC_NUMBER;
 			break;
-		
-		/* 
-		 * Don't go past the beginning.
-		 * Comic 0 is actually the current comic.
-		 * Handle this like this case by going to the second newest comic.
-		 */
+		// Don't go past the beginning.
 		case R.id.previousButton:
-			switch (sPresentComicNumber) {
-			case 0:
-				sPresentComicNumber = sCurrentComicNumber - 1;
-				break;
-			case 1:
-				sPresentComicNumber = FIRST_COMIC_NUMBER;
-				break;
-			default:
-				sPresentComicNumber--;
-			}
+			sPresentComicNumber -= (FIRST_COMIC_NUMBER == sPresentComicNumber) ? 0 : 1;
 			break;
 		case R.id.randomButton:
 			sPresentComicNumber = sRandomNumber.nextInt(sCurrentComicNumber);
 			break;
-		/* Don't go past the end or comic 0, which is actually the current comic. */
+		// Don't go past the end.
 		case R.id.nextButton:
-			if ((sPresentComicNumber == sCurrentComicNumber) || (sPresentComicNumber == 0)) {
-				sPresentComicNumber = sCurrentComicNumber;
-			} else {
-				sPresentComicNumber++;
-			}
+			sPresentComicNumber += (sCurrentComicNumber == sPresentComicNumber) ? 0 : 1;
 			break;
 		case R.id.currentButton:
 			sPresentComicNumber = sCurrentComicNumber;
@@ -148,6 +117,8 @@ public class GooseActivity extends Activity {
 		default:
 			break;
 		}
+
+		// Load the new comic number.
 		loadComic();
 	}
 	
@@ -189,10 +160,9 @@ public class GooseActivity extends Activity {
 
         /* Set up the navigation control layout if it is to be hidden. */
         sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
-    	
-        // Get the latest comic number.
-    	findCurrentComic();
-
+        
+        // Load the latest comic.
+        loadComic();
     }
     
     /**
@@ -296,6 +266,7 @@ public class GooseActivity extends Activity {
      * Gets the correct comic number, image source, comic title, and alt-text.
      */
     private void scrapeSite() {
+    	// TODO: This should probably be refactored to more specific methods.
     	// It's time for some fun.
     	try {
     		// Set the present URL, in case it's never been done.
