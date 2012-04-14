@@ -31,7 +31,8 @@ import org.jsoup.select.Elements;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface.OnDismissListener;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -41,8 +42,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnLongClickListener;
-import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,18 +77,17 @@ public class GooseActivity extends Activity {
 	private static TextView sAltTextView;
     private static WebView sComicView;
 	private static Document sRawHtml;
+	private static ProgressDialog sLoadingComic; 
 	
 	/**
 	 * Parses the home page for the value of the current comic.
 	 */
     private void findCurrentComic() {
-    	// It's scrapin' time!
-    	scrapeSite();
-    	// Set scraped to true, so we don't have to do this again so soon.
-    	sScraped = true;
-    	// Set the current comic number based on what was just parsed.
-    	sCurrentComicNumber = sPresentComicNumber;
-    	// Display this latest comic.
+//    	// It's scrapin' time!
+//    	scrapeSite();
+//    	// Set scraped to true, so we don't have to do this again so soon.
+//    	sScraped = true;
+//    	// Display this latest comic.
     	loadComic();
     	// Reset scraped to false, so things will work like they should.
     	sScraped = false;
@@ -96,23 +97,7 @@ public class GooseActivity extends Activity {
      * Loads the present comic URL into the webview.
      */
     private void loadComic() {
-    	// Scrapy scrapy.
-//    	scrapeSite();
-    	
-    	sComicView.loadUrl(sImageUrl);
-//    	sComicView.setWebChromeClient(new WebChromeClient() {
-//    		@Override
-//    		public void onProgressChanged(WebView view, int progress) {
-//    			if (progress == 100) {
-//    				loadingComic.dismiss();
-//    			}
-//    		}
-//    	});
-    	/* 
-    	 * XXX There has to be a better way to keep the cache from filling.
-    	 * Especially since this doesn't work.
-    	 */
-    	sComicView.clearCache(true);
+    	new scrapeSiteTask(this).execute();
     }
 
     /**
@@ -157,12 +142,13 @@ public class GooseActivity extends Activity {
 			break;
 		case R.id.currentButton:
 			sPresentComicNumber = sCurrentComicNumber;
+			// See if there's a newer comic, highly doubtful in the span of time.
+			sScraped = false;
 			break;
 		default:
 			break;
 		}
-//		loadComic();
-		new scrapeSiteTask(this).execute();
+		loadComic();
 	}
 	
 	/**
@@ -178,6 +164,7 @@ public class GooseActivity extends Activity {
         sComicView.getSettings().setBuiltInZoomControls(true);
         sComicView.getSettings().setLoadWithOverviewMode(true);
         sComicView.getSettings().setUseWideViewPort(true);
+        sComicView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
         sComicView.setOnLongClickListener(new OnLongClickListener() {
 			public boolean onLongClick(View v) {
 				showDialog(SHOW_INFO_DIALOG);
@@ -185,6 +172,20 @@ public class GooseActivity extends Activity {
 				return true;
 			}
 		});
+        sComicView.setWebViewClient(new WebViewClient() {
+        	
+        	@Override
+        	public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        		view.loadUrl(url);
+        		return true;
+        	}
+        	@Override
+        	public void onPageFinished(WebView view, String url) {
+        		if (null != sLoadingComic && sLoadingComic.isShowing()) {
+        			sLoadingComic.dismiss();
+        		}
+        	}
+        });
 
         /* Set up the navigation control layout if it is to be hidden. */
         sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
@@ -295,11 +296,7 @@ public class GooseActivity extends Activity {
      * Gets the correct comic number, image source, comic title, and alt-text.
      */
     private void scrapeSite() {
-    	// If we just recently did this, return.
-    	if (sScraped) {
-    		return;
-    	}
-    	// Otherwise, it's time for some fun.
+    	// It's time for some fun.
     	try {
     		// Set the present URL, in case it's never been done.
     		sPresentUrl = getString(R.string.base_url) + sPresentComicNumber;
@@ -315,6 +312,12 @@ public class GooseActivity extends Activity {
 				String presentNumber = divTag.id().substring(5);
 				// Convert it to an integer, so we can play with it.
 				sPresentComicNumber = Integer.parseInt(presentNumber);
+		    	// If this is the first time we've scraped the site,
+				// or the latest button on pressed, set the latest comic number.
+		    	if (!sScraped) {
+		        	sCurrentComicNumber = sPresentComicNumber;
+		        	sScraped = true;
+		    	}
 				// Now that we have the actual comic number,
 				// reset the present URL to the actual URL.
 				sPresentUrl = getString(R.string.base_url) + sPresentComicNumber; 
@@ -381,59 +384,37 @@ public class GooseActivity extends Activity {
     	}
     }
     
-    @Override
-    public void onBackPressed() {
-    	if (null != mScrapeTask) {
-    		mScrapeTask.cancel(true);
-    	}
-    	super.onBackPressed();
-    }
-    private scrapeSiteTask mScrapeTask;
-    private class scrapeSiteTask extends AsyncTask<Void, Void, Boolean> {
+    private class scrapeSiteTask extends AsyncTask<Void, Void, Void> {
 
-    	// Create a progress dialog.
-    	private ProgressDialog mLoadingComic;
-    	
     	public scrapeSiteTask(GooseActivity mainActivity) {
-    		mLoadingComic = new ProgressDialog(mainActivity);
-    		mLoadingComic.setMessage(getString(R.string.loading_comic));
-    		mLoadingComic.setCancelable(true);
+    		// Make a new progress dialog.
+    		sLoadingComic = new ProgressDialog(mainActivity);
+    		sLoadingComic.setMessage(getString(R.string.loading_comic));
+    		sLoadingComic.setOnCancelListener(new OnCancelListener() {
+				public void onCancel(DialogInterface dialog) {
+					scrapeSiteTask.this.cancel(true);
+				}
+    		});
     	}
     	
     	@Override
     	protected void onPreExecute() {
         	// Throw up the progress dialog box.
-    		mLoadingComic.show();
+    		sLoadingComic.show();
     	}
     	
 		@Override
-		protected Boolean doInBackground(Void... params) {
+		protected Void doInBackground(Void... params) {
+			// Scrape the goose.
 			scrapeSite();
-			if (isCancelled()) {
-				return false;
-			} else {
-				return true;
-			}
+			
+			return null;
 		}
     	
 		@Override
-		protected void onPostExecute(Boolean canceled) {
-			if (!canceled) {
-				sComicView.loadUrl(sImageUrl);
-				sComicView.clearCache(true);
-				if (mLoadingComic.isShowing()) {
-					mLoadingComic.dismiss();
-				}
-			}
+		protected void onPostExecute(Void nothing) {
+			// Load the comic if nothing was canceled.
+			sComicView.loadUrl(sImageUrl);
 		}
-		
-		@Override
-		protected void onCancelled() {
-			super.onCancelled();
-			if (mLoadingComic.isShowing()) {
-				mLoadingComic.dismiss();
-			}
-		}
-		
     }
 }
