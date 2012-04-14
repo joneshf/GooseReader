@@ -32,6 +32,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
@@ -380,5 +381,26 @@ public class GooseActivity extends Activity {
     	} else {
     		sNavigationLayout.setVisibility(View.GONE);
     	}
+    }
+    
+    private class scrapeSiteTask extends AsyncTask<Void, Void, Void> {
+
+    	@Override
+    	protected void onPreExecute() {
+    		// TODO Auto-generated method stub
+    		super.onPreExecute();
+    	}
+    	
+		@Override
+		protected Void doInBackground(Void... params) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+    	
+		@Override
+		protected void onPostExecute(Void result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+		}
     }
 }
