@@ -31,6 +31,7 @@ import org.jsoup.select.Elements;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -95,22 +96,18 @@ public class GooseActivity extends Activity {
      * Loads the present comic URL into the webview.
      */
     private void loadComic() {
-    	// Throw up a progress dialog box.
-    	final ProgressDialog loadingComic = ProgressDialog.show(GooseActivity.this, "", getString(R.string.loading_comic));
-    	// Let the user cancel it if need be.
-    	loadingComic.setCancelable(true);
     	// Scrapy scrapy.
-    	scrapeSite();
+//    	scrapeSite();
     	
     	sComicView.loadUrl(sImageUrl);
-    	sComicView.setWebChromeClient(new WebChromeClient() {
-    		@Override
-    		public void onProgressChanged(WebView view, int progress) {
-    			if (progress == 100) {
-    				loadingComic.dismiss();
-    			}
-    		}
-    	});
+//    	sComicView.setWebChromeClient(new WebChromeClient() {
+//    		@Override
+//    		public void onProgressChanged(WebView view, int progress) {
+//    			if (progress == 100) {
+//    				loadingComic.dismiss();
+//    			}
+//    		}
+//    	});
     	/* 
     	 * XXX There has to be a better way to keep the cache from filling.
     	 * Especially since this doesn't work.
@@ -164,7 +161,8 @@ public class GooseActivity extends Activity {
 		default:
 			break;
 		}
-		loadComic();
+//		loadComic();
+		new scrapeSiteTask(this).execute();
 	}
 	
 	/**
@@ -383,24 +381,59 @@ public class GooseActivity extends Activity {
     	}
     }
     
-    private class scrapeSiteTask extends AsyncTask<Void, Void, Void> {
+    @Override
+    public void onBackPressed() {
+    	if (null != mScrapeTask) {
+    		mScrapeTask.cancel(true);
+    	}
+    	super.onBackPressed();
+    }
+    private scrapeSiteTask mScrapeTask;
+    private class scrapeSiteTask extends AsyncTask<Void, Void, Boolean> {
 
+    	// Create a progress dialog.
+    	private ProgressDialog mLoadingComic;
+    	
+    	public scrapeSiteTask(GooseActivity mainActivity) {
+    		mLoadingComic = new ProgressDialog(mainActivity);
+    		mLoadingComic.setMessage(getString(R.string.loading_comic));
+    		mLoadingComic.setCancelable(true);
+    	}
+    	
     	@Override
     	protected void onPreExecute() {
-    		// TODO Auto-generated method stub
-    		super.onPreExecute();
+        	// Throw up the progress dialog box.
+    		mLoadingComic.show();
     	}
     	
 		@Override
-		protected Void doInBackground(Void... params) {
-			// TODO Auto-generated method stub
-			return null;
+		protected Boolean doInBackground(Void... params) {
+			scrapeSite();
+			if (isCancelled()) {
+				return false;
+			} else {
+				return true;
+			}
 		}
     	
 		@Override
-		protected void onPostExecute(Void result) {
-			// TODO Auto-generated method stub
-			super.onPostExecute(result);
+		protected void onPostExecute(Boolean canceled) {
+			if (!canceled) {
+				sComicView.loadUrl(sImageUrl);
+				sComicView.clearCache(true);
+				if (mLoadingComic.isShowing()) {
+					mLoadingComic.dismiss();
+				}
+			}
 		}
+		
+		@Override
+		protected void onCancelled() {
+			super.onCancelled();
+			if (mLoadingComic.isShowing()) {
+				mLoadingComic.dismiss();
+			}
+		}
+		
     }
 }
