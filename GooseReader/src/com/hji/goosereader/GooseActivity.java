@@ -139,10 +139,13 @@ public class GooseActivity extends Activity {
 
 		/* Set up the webview */
 		sComicView = (WebView) findViewById(R.id.comicView);
-		sComicView.getSettings().setBuiltInZoomControls(true);
-		sComicView.getSettings().setLoadWithOverviewMode(true);
-		sComicView.getSettings().setUseWideViewPort(true);
-		sComicView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+		WebSettings comicSettings = sComicView.getSettings();
+		comicSettings.setBuiltInZoomControls(true);
+		comicSettings.setLoadWithOverviewMode(true);
+		comicSettings.setUseWideViewPort(true);
+		comicSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+		comicSettings.setAppCacheEnabled(false);
+		comicSettings.setAppCacheMaxSize(0);
 		sComicView.setOnLongClickListener(new OnLongClickListener() {
 			public boolean onLongClick(View v) {
 				showDialog(SHOW_INFO_DIALOG);
@@ -414,6 +417,7 @@ public class GooseActivity extends Activity {
 		protected void onPostExecute(Void nothing) {
 			// Load the comic if nothing was canceled.
 			sComicView.loadUrl(sImageUrl);
+			sComicView.clearCache(true);
 		}
 
 		/**
