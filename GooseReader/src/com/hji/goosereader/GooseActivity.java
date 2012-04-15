@@ -167,7 +167,11 @@ public class GooseActivity extends Activity {
 
         /* Set up the navigation control layout if it is to be hidden. */
         sNavigationLayout = (LinearLayout) findViewById(R.id.buttonLayout);
-        
+		// Make a new progress dialog.
+		sLoadingComic = new ProgressDialog(this);
+		// Load it up with the loading info.
+		sLoadingComic.setMessage(getString(R.string.loading_comic));
+
         // Load the latest comic.
         loadComic();
     }
@@ -375,17 +379,13 @@ public class GooseActivity extends Activity {
     	 * @param mainActivity the activity that is calling
     	 */
     	public scrapeSiteTask(GooseActivity mainActivity) {
-    		// Make a new progress dialog.
-    		sLoadingComic = new ProgressDialog(mainActivity);
-    		// Load it up with the loading info.
-    		sLoadingComic.setMessage(getString(R.string.loading_comic));
     		// Allow a listener to cancel this whole task.
     		sLoadingComic.setOnCancelListener(new OnCancelListener() {
-				public void onCancel(DialogInterface dialog) {
-					scrapeSiteTask.this.cancel(true);
-				}
-    		});
+			public void onCancel(DialogInterface dialog) {
+				scrapeSiteTask.this.cancel(true);
+			}});
     	}
+
     	
     	/**
     	 * Shows the actual progress dialog.
