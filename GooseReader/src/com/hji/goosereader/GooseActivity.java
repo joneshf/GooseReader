@@ -72,6 +72,7 @@ public class GooseActivity extends Activity {
 	private static String sComicTitle;
 	private static String sImageUrl;
 	private static String sPresentUrl;
+	
 	private static Dialog sInfoDialog;
 	private static Document sRawHtml;
 	private static LinearLayout sNavigationLayout;
@@ -79,11 +80,13 @@ public class GooseActivity extends Activity {
 	private static TextView sAltTextView;
     private static WebView sComicView;
 	
-
+    private static TemporaryInfo oldInfo;
+    
     /**
      * Starts {@link scrapeSiteTask} in another thread to load the comic into the webview.
      */
     private void loadComic() {
+    	// Create an anonymous scrape task in another thread.
     	new scrapeSiteTask(this).execute();
     }
 
@@ -93,6 +96,10 @@ public class GooseActivity extends Activity {
      */
 	public void navigationButtonHandler(View button) {
 		button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+		
+		// Save the old info in case loading is canceled mid-load.
+		oldInfo = new TemporaryInfo(sPresentComicNumber, sCurrentComicNumber, sAltText,
+				sComicTitle, sImageUrl, sPresentUrl);
 		
 		switch (button.getId()) {
 		case R.id.firstButton:
@@ -355,12 +362,24 @@ public class GooseActivity extends Activity {
     	}
     }
     
+    /**
+     * Performs site scraping in a child thread so as not to block the UI thread.
+     * 
+     * @author Hardy Jones III
+     *
+     */
     private class scrapeSiteTask extends AsyncTask<Void, Void, Void> {
 
+    	/**
+    	 * Sets up the task.  Creates a progress dialog with loading info.
+    	 * @param mainActivity the activity that is calling
+    	 */
     	public scrapeSiteTask(GooseActivity mainActivity) {
     		// Make a new progress dialog.
     		sLoadingComic = new ProgressDialog(mainActivity);
+    		// Load it up with the loading info.
     		sLoadingComic.setMessage(getString(R.string.loading_comic));
+    		// Allow a listener to cancel this whole task.
     		sLoadingComic.setOnCancelListener(new OnCancelListener() {
 				public void onCancel(DialogInterface dialog) {
 					scrapeSiteTask.this.cancel(true);
@@ -368,12 +387,18 @@ public class GooseActivity extends Activity {
     		});
     	}
     	
+    	/**
+    	 * Shows the actual progress dialog.
+    	 */
     	@Override
     	protected void onPreExecute() {
         	// Throw up the progress dialog box.
     		sLoadingComic.show();
     	}
     	
+    	/**
+    	 * This is the grunt work.  Does the actual scraping of the site.
+    	 */
 		@Override
 		protected Void doInBackground(Void... params) {
 			// Scrape the goose.
@@ -382,10 +407,28 @@ public class GooseActivity extends Activity {
 			return null;
 		}
     	
+		/**
+		 * Load whatever image we got into the webview.
+		 */
 		@Override
 		protected void onPostExecute(Void nothing) {
 			// Load the comic if nothing was canceled.
 			sComicView.loadUrl(sImageUrl);
+		}
+		
+		/**
+		 * Loads old info so that the other features are consistent.
+		 */
+		@Override
+		protected void onCancelled() {
+			// Load the old info back.
+			sPresentComicNumber = oldInfo.getmPresentComicNumber();
+			sCurrentComicNumber = oldInfo.getmLatestComicNumber();
+			sAltText = oldInfo.getmAltText();
+			sComicTitle = oldInfo.getmComicTitle();
+			sImageUrl = oldInfo.getmImageUrl();
+			sPresentUrl = oldInfo.getmPresentUrl();
+			super.onCancelled();
 		}
     }
 }
