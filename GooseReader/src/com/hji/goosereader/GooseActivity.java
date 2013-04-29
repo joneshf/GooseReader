@@ -284,14 +284,14 @@ public class GooseActivity extends Activity {
     		sPresentUrl = getString(R.string.base_url) + sPresentComicNumber;
     		// Connect to the site and get the HTML.
 			sRawHtml = Jsoup.connect(sPresentUrl).get();
-			// Try to get the div with a post class.
-			Elements divTags = sRawHtml.select(getString(R.string.find_div_tag));
+			// Try to get the proper <a> tag.
+			Elements anchorTags = sRawHtml.select(getString(R.string.find_comic_anchor));
 			
-			if (divTags.size() > 0) {
-				// Assuming we got any divs, take the first one.
-				Element divTag = divTags.first();
+			if (anchorTags.size() > 0) {
+				// Assuming we got any title, take the first one.
+				Element anchorTag = anchorTags.first();
 				// Get the current comic number.
-				String presentNumber = divTag.id().substring(5);
+				String presentNumber = anchorTag.attr("href").split(".com/")[1];
 				// Convert it to an integer, so we can play with it.
 				sPresentComicNumber = Integer.parseInt(presentNumber);
 		    	// If this is the first time we've scraped the site,
@@ -305,17 +305,11 @@ public class GooseActivity extends Activity {
 				sPresentUrl = getString(R.string.base_url) + sPresentComicNumber; 
 				
 				// Grab the comic header and the img stuff.
-				Elements anchorTags = divTag.select(getString(R.string.find_anchor_tag));
-				Elements imageTags = divTag.select(getString(R.string.find_image_tag));
+				Elements imageTags = sRawHtml.select(getString(R.string.find_image_tag));
 
-				// See if we got any anchor tags.
-				if (anchorTags.size() > 0) {
-					// Take the text of the tag as the comic title.
-					sComicTitle = anchorTags.first().ownText();
-				} else {
-					// There was no title for the comic. Use a default value.
-					sComicTitle = getString(R.string.app_name);
-				}
+				sComicTitle = (sComicTitle = anchorTag.ownText()) != ""
+						? sComicTitle
+						: getString(R.string.app_name);
 				
 				// See if we got any image tags.
 				if (imageTags.size() > 0) {
@@ -326,11 +320,11 @@ public class GooseActivity extends Activity {
 					parseImageSource(rawSource);
 				} else {
 					// There was no image tag.
-					Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
+//					Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
 				}
 			} else {
-				// Couldn't find a div tag.
-				Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
+//				 Couldn't find a div tag.
+//				Toast.makeText(getApplicationContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
 			}
 			
 		} catch (IOException e) {
